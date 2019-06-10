@@ -12,12 +12,18 @@ def get_attribute(tag,attr,cast=str):
 	try:
 		return cast(tag[attr])
 	except KeyError as e:
-		if cast is float or cast is int:
-			return 0
-		else:
-			return ''
+		return None
+GRID_ARGS = {
+	"padx":int,
+	"pady":int,
+	"sticky":str,
+	"row":int,
+	"column":int,
+}
 def get_grid(tag):
-	return{"padx":get_attribute(tag,"padx",int),"pady":get_attribute(tag,"pady",int)}
+	return dict([(arg,get_attribute(tag,arg,kind))\
+	 for arg,kind in GRID_ARGS.items()\
+	  if get_attribute(tag,arg,kind) is not None])
 
 
 class window(tk.Tk):
