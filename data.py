@@ -35,7 +35,16 @@ class SqlDb():
         # r = requests.get("https://api.imgur.com/3/tags", headers={'Authorization': self.CLIENT})
         data = json.loads(response.text)
         data = data['data']
-        print(response.text)
+        i = 1
+        for item in data:
+            print(i)
+            if 'images' in item.keys():
+                for image in item['images']:
+                    print(image['link'])
+            else:
+                print(item['link'])
+            i += 1
+        print()
 
     def get_image(self, img_id):
         pass
