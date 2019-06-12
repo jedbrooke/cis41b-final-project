@@ -62,7 +62,12 @@ class SqlDb():
         except sqlite3.OperationalError as e:
             print(str(e))
             raise SystemExit
-        #
+        
+        self.conn.commit()
+
+    def __del__(self):
+        self.conn.commit()
+        self.conn.close()
 
 if __name__ == "__main__":
     db = SqlDb()
