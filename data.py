@@ -19,6 +19,9 @@ class SqlDb():
         if not os.path.isfile(self.DB_NAME):
             self.create_db()
             print('created new db')
+        else:
+            self.conn = sqlite3.connect(self.DB_NAME)
+            self.cur = self.conn.cursor()
 
     def add_to_db(self, image, metadata):
         pass
