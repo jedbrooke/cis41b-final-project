@@ -4,16 +4,18 @@ data.py handles the file storage and retrieval for the GUI
 """
 import sqlite3
 import sys
+import os
 
 class SqlDb():
     # Set up connection
-    DBNAME = 'images.db'
+    DB_NAME = 'images.db'
     def __init__(self):
         """ 
         Set up db if none is found
         """
-        # Check for existance of db
-        self.create_db()
+        if not os.path.isfile(self.DB_NAME):
+            self.create_db()
+            print('created new db')
 
     def add_to_db(self, image, metadata):
         pass
@@ -28,7 +30,7 @@ class SqlDb():
         pass
 
     def create_db(self):
-        self.conn = sqlite3.connect(self.DBNAME)
+        self.conn = sqlite3.connect(self.DB_NAME)
         self.cur = self.conn.cursor()
 
         tables = ['Images', 'Image_Categories', 'Categories']
