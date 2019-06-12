@@ -5,6 +5,8 @@ data.py handles the file storage and retrieval for the GUI
 import sqlite3
 import sys
 import os
+import requests
+import json
 
 class SqlDb():
     # Set up connection
@@ -25,6 +27,15 @@ class SqlDb():
 
     def add_to_db(self, image, metadata):
         pass
+
+    def get_nimages_with_category(self, category, n):
+        headers = {'Authorization': 'Client-ID ' + self.CLIENT}
+        url = 'https://api.imgur.com/3/gallery/search/?q=cats'
+        response = requests.request('GET', url, headers = headers)
+        # r = requests.get("https://api.imgur.com/3/tags", headers={'Authorization': self.CLIENT})
+        data = json.loads(response.text)
+        data = data['data']
+        print(response.text)
 
     def get_image(self, img_id):
         pass
@@ -77,3 +88,4 @@ class SqlDb():
 
 if __name__ == "__main__":
     db = SqlDb()
+    db.get_nimages_with_category('cats', 30)
