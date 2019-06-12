@@ -9,6 +9,9 @@ import os
 class SqlDb():
     # Set up connection
     DB_NAME = 'images.db'
+    CLIENT = 'd46861ef7ecb2dc'
+    CLIENT_SECRET = '8889ad15753f373b14b2cfb74de86004837c7137'
+    
     def __init__(self):
         """ 
         Set up db if none is found
