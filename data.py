@@ -10,7 +10,7 @@ class sqldb():
     def __init__(self):
         pass
 
-    def add_to_db(self, image):
+    def add_to_db(self, image, metadata):
         pass
 
     def get_image(self, img_id):
@@ -20,4 +20,7 @@ class sqldb():
         pass
 
     def delete_image(self, img_id):
+        pass
+
+    def create_db(self):
         pass
