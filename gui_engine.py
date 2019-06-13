@@ -2,6 +2,17 @@ from bs4 import BeautifulSoup as bs
 import tkinter as tk
 from tkinter import Canvas
 
+def display_results(images):
+    #for image in images:
+    #generate html for the images, pass that to gui Window
+
+    pass
+
+def generate_tag_count_graph(tag_counts):
+    #plot the tags based on occurrence
+    #tag_counts is tuple of list of tags and list of counts
+    pass
+
 """utility functions"""
 
 def get_xml(path):
@@ -17,6 +28,7 @@ def get_attribute(tag,attr,cast=str):
         return cast(tag[attr])
     except KeyError as e:
         return None
+
 GRID_ARGS = {
     "padx":int,
     "pady":int,
@@ -29,21 +41,50 @@ LISTBOX_ARGS = {
     "width":int,
     "selectmode":str,
 }
-def get_grid_args(tag):
+
+BUTTON_ARGS = {
+    "link":str,
+    "action":str,
+    "btype":str,
+    "title":str
+}
+
+ELEMENT_ARGS = {
+    "grid":GRID_ARGS,
+    "listbox":LISTBOX_ARGS,
+    "button":BUTTON_ARGS,
+}
+
+def get_element_args(tag,element):
     return dict(\
         [(arg,get_attribute(tag,arg,kind))\
-        for arg,kind in GRID_ARGS.items()\
+        for arg,kind in ELEMENT_ARGS[element].items()\
         if get_attribute(tag,arg,kind) is not None])
+
+def get_grid_args(tag):
+    return get_element_args(tag,"grid")
 
 def get_listbox_args(tag):
-    return dict(\
-        [(arg,get_attribute(tag,arg,kind))\
-        for arg,kind in LISTBOX_ARGS.items()\
-        if get_attribute(tag,arg,kind) is not None])
+    return get_element_args(tag,"listbox")
 
-class window():
-    """docstring for window"""
-    def __init__(self,soup=None,path=None):
+def get_button_args(tag):
+    return get_element_args(tag,"button")
+
+class Button():
+    def __init__(self, link=None, action=None, btype=None, title=None):
+        self.link = link
+        self.action = action
+        self.btype = btype
+        self.title = title
+        print(link and not btype)
+        if link and not btype:
+            self.btype = "link"
+        print("creating button",self.link,self.btype)
+        
+
+class Window():
+    """docstring for Window"""
+    def __init__(self,soup=None,path=None,main=False,master=None):
         self.HEAD_ACTIONS = {
             "title":self.set_title,
             "geometry":self.set_geometry
@@ -56,9 +97,17 @@ class window():
             "scrollbox":self.create_scrollbox,
             "listbox":self.create_listbox,
         }
-        self.win = tk.Tk()
-        self.win.grab_set()
-        self.win.focus_set()
+
+
+        self.buttons = {}
+
+        if main:
+            self.win = tk.Tk()
+        else:
+            self.win = tk.Toplevel()
+            self.win.transient(master=master)
+            self.win.grab_set()
+            self.win.focus_set()
         self.main_frame = tk.Frame(self.win)
         #self.win.resizable(False,False)
         if soup is None and path is not None:
@@ -101,7 +150,14 @@ class window():
         tk.Label(parent,text=label.text.strip()).grid(get_grid_args(label))
 
     def create_button(self,button,parent):
-        tk.Button(parent,text=button.text.strip(),command=lambda:print("hello")).grid(get_grid_args(button))
+        b = tk.Button(parent,text=button.text.strip())
+        b.grid(get_grid_args(button))
+        link = get_attribute(button,"link")
+        if link:
+            self.buttons[str(b)] = Button(**get_button_args(button))
+            b.bind("<Button-1>",self.button_clicked)
+
+
 
     def create_frame(self,frame,parent):
         if get_attribute(frame,"scrolling",bool_from_str):
@@ -147,10 +203,28 @@ class window():
         frame.grid(get_grid_args(scrollbox))
 
 
+    def on_click(self,event):
+        caller = event.widget
+        print(caller)
 
+    def button_clicked(self,event):
+        button = self.buttons[str(event.widget)]
+        BUTTON_TYPE_ACTIONS[button.btype](self,button)
+        
 
+    def back_button(self,button):
+        self.win.destroy()
+
+    def link_clicked(self,button):
+        Window(get_xml(f"gui_pages/{button.link}"),master=self.win)
+
+BUTTON_TYPE_ACTIONS = {
+    "back":Window.back_button,
+    "link":Window.link_clicked,
+}
 
 def main():
-    window(get_xml("gui_pages/main.html"))
+    Window(get_xml("gui_pages/main.html"),main=True)
 
-main()
+if __name__ == '__main__':
+    main()
