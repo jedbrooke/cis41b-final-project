@@ -2,6 +2,9 @@ from bs4 import BeautifulSoup as bs
 import tkinter as tk
 from tkinter import Canvas
 
+def print_hello():
+    print("hello")
+
 def display_results(images):
     #for image in images:
     #generate html for the images, pass that to gui Window
@@ -76,10 +79,10 @@ class Button():
         self.action = action
         self.btype = btype
         self.title = title
-        print(link and not btype)
         if link and not btype:
             self.btype = "link"
-        print("creating button",self.link,self.btype)
+        elif action and not btype:
+            self.btype = "action"
         
 
 class Window():
@@ -152,10 +155,8 @@ class Window():
     def create_button(self,button,parent):
         b = tk.Button(parent,text=button.text.strip())
         b.grid(get_grid_args(button))
-        link = get_attribute(button,"link")
-        if link:
-            self.buttons[str(b)] = Button(**get_button_args(button))
-            b.bind("<Button-1>",self.button_clicked)
+        self.buttons[str(b)] = Button(**get_button_args(button))
+        b.bind("<Button-1>",self.button_clicked)
 
 
 
@@ -205,7 +206,6 @@ class Window():
 
     def on_click(self,event):
         caller = event.widget
-        print(caller)
 
     def button_clicked(self,event):
         button = self.buttons[str(event.widget)]
@@ -218,9 +218,14 @@ class Window():
     def link_clicked(self,button):
         Window(get_xml(f"gui_pages/{button.link}"),master=self.win)
 
+    def button_action(self,button):
+        if button.action in globals():
+            globals()[button.action]()
+
 BUTTON_TYPE_ACTIONS = {
     "back":Window.back_button,
     "link":Window.link_clicked,
+    "action":Window.button_action,
 }
 
 def main():
