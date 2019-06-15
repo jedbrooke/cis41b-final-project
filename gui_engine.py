@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup as bs
 import tkinter as tk
 from tkinter import Canvas
+from PIL import ImageTk,Image 
 
 def print_hello():
     print("hello")
@@ -73,6 +74,15 @@ def get_listbox_args(tag):
 def get_button_args(tag):
     return get_element_args(tag,"button")
 
+def get_image(src,target_size):
+    img_pil = Image.open(src)
+    width,height = img_pil.size
+    ratio = width/height
+    width_new = target_size
+    height_new = target_size/ratio
+    img_pil = img_pil.resize((int(width_new), int(height_new)), Image.ANTIALIAS)
+    return ImageTk.PhotoImage(img_pil)
+
 class Button():
     def __init__(self, link=None, action=None, btype=None, title=None):
         self.link = link
@@ -99,10 +109,14 @@ class Window():
             "div":self.create_frame,
             "scrollbox":self.create_scrollbox,
             "listbox":self.create_listbox,
+            "img":self.create_image,
+            "form":self.create_form,
+            "input":self.create_input,
         }
 
 
         self.buttons = {}
+        self.images = []
 
         if main:
             self.win = tk.Tk()
@@ -203,6 +217,15 @@ class Window():
         scrollbar['command'] = listbox.yview
         frame.grid(get_grid_args(scrollbox))
 
+    def create_image(self,tag,parent):
+        src = get_attribute(tag,"src")
+        canvas = tk.Canvas(parent)
+        canvas.grid()
+        img = get_image(src,250)
+        canvas.create_image(0,0,anchor=tk.N+tk.W, image=img)
+        self.images.append(img)
+
+
 
     def on_click(self,event):
         caller = event.widget
@@ -221,6 +244,7 @@ class Window():
     def button_action(self,button):
         if button.action in globals():
             globals()[button.action]()
+
 
 BUTTON_TYPE_ACTIONS = {
     "back":Window.back_button,
