@@ -70,13 +70,22 @@ class SqlDb():
                         id INTEGER NOT NULL PRIMARY KEY,
                         file BLOB,
                         url TEXT,
-                        nsfw INTEGER                        
+                        nsfw INTEGER,
+                        filetype INTEGER,
+                        sizetype INTEGER,
+                        FOREIGN KEY (filetype) REFERENCES Filetypes(id),
+                        FOREIGN KEY (sizetype) REFERENCES Sizes(id)                  
                         );''')
 
             self.cur.execute('''CREATE TABLE Categories (
                         id INTEGER NOT NULL PRIMARY KEY,
                         category TEXT                        
                         );''')
+
+            self.cur.execute('''CREATE TABLE Filetypes (
+                        id INTEGER NOT NULL PRIMARY KEY,
+                        filetype TEXT                        
+                        );''') 
 
             self.cur.execute('''CREATE TABLE Image_Categories (
                         img_id INTEGER NOT NULL,
