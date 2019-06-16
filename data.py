@@ -81,10 +81,12 @@ class SqlDb():
             i += 1
             if i > 5: break ## break
         
-        return self.generator_from_category(category)
+        return self.get_images_from_category(category)
 
-
-    def generator_from_category(self, category):
+    def get_images_from_category(self, category):
+        """ 
+        returns that generagtor of images
+        """
         while True:
             results = self.cur.execute('''SELECT url FROM IMAGES ''').fetchall()
             if results:
