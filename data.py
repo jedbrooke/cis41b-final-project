@@ -7,6 +7,7 @@ import sys
 import os
 import requests
 import json
+from PIL import ImageTk, Image 
 
 class SqlDb():
     DB_NAME = 'images.db'
