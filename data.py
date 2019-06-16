@@ -27,7 +27,13 @@ class SqlDb():
     def add_to_db(self, image, metadata):
         pass
 
-    def get_nimages_with_category(self, category, n):
+
+    def download_nimages_with_category(self, category, n, queue):
+        """ 
+        Downloads the images to the db with multithreading
+        If image does not have tag, assume the tag is not in the immage
+        Returns a generator that returns the images with their data
+        """
         headers = {'Authorization': 'Client-ID ' + self.CLIENT}
         url = 'https://api.imgur.com/3/gallery/search/?q=cats'
         response = requests.request('GET', url, headers = headers)
@@ -44,15 +50,55 @@ class SqlDb():
                 print(item['link'])
             i += 1
         print()
+        gen = [] # Some sort of generator
+        return gen
+
+    def get_images_from_category(self, tag):
+        """ 
+        returns that generagtor of images
+        """
+
+        gen = []
+        return gen
 
     def get_image(self, img_id):
         pass
 
     def get_count_of_tag(self, tag):
+        """ 
+        REturns a tuple of tag and count
+        """
+        tag = []
+        count = []
+        return (tag, count)
+
+    def change_tag(self): # optional
+        """ 
+        Change tag of images 
+        """
         pass
 
-    def delete_image(self, img_id):
-        pass
+    def get_categories(self):
+        """ 
+        Returns a list of all the categories on the db (also count of each category)
+        """
+        categories = []
+        return categories
+
+    def delete_images(self, img_list):
+        """ 
+        Deletes images from list
+        """
+        success = True
+        return success
+
+
+    def export_images(self, tag, directory):
+        """ 
+        Saves all the images with tag into directory        
+        """
+        success = True
+        return success
 
     def create_db(self):
         self.conn = sqlite3.connect(self.DB_NAME)
