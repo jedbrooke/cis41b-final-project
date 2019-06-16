@@ -151,4 +151,4 @@ class SqlDb():
 
 if __name__ == "__main__":
     db = SqlDb()
-    db.get_nimages_with_category('cats', 30)
+    db.download_nimages_with_category('cats', 30)
