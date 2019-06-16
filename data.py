@@ -125,12 +125,12 @@ class SqlDb():
 
             self.cur.execute('''CREATE TABLE Categories (
                         id INTEGER NOT NULL PRIMARY KEY,
-                        category TEXT                        
+                        category TEXT UNIQUE ON CONFLICT IGNORE                     
                         );''')
 
             self.cur.execute('''CREATE TABLE Filetypes (
                         id INTEGER NOT NULL PRIMARY KEY,
-                        filetype TEXT                        
+                        filetype TEXT UNIQUE ON CONFLICT IGNORE
                         );''') 
 
             self.cur.execute('''CREATE TABLE Image_Categories (
