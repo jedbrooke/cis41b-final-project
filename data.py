@@ -82,6 +82,18 @@ class SqlDb():
         
         return self.generator_from_category(category)
 
+
+    def generator_from_category(self, category):
+        while True:
+            results = self.cur.execute('''SELECT url FROM IMAGES ''').fetchall()
+            if results:
+                for result in results:
+                    yield result[0]
+                break ## Should this be stop iteratrion?
+            else:
+                break ## Should this be stop iteratrion?
+
+
     def get_images_from_category(self, tag):
         """ 
         returns that generagtor of images
