@@ -96,15 +96,6 @@ class SqlDb():
             else:
                 break ## Should this be stop iteratrion?
 
-
-    def get_images_from_category(self, tag):
-        """ 
-        returns that generagtor of images
-        """
-
-        gen = []
-        return gen
-
     def get_image(self, img_id):
         pass
 
