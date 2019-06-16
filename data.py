@@ -59,15 +59,28 @@ class SqlDb():
         i = 1
         for item in data:
             print(i)
+
             if 'images' in item.keys():
+                album_categories = [(i['name'],) for i in item['tags']] 
+
                 for image in item['images']:
-                    print(image['link'])
+                    url = image['link']
+                    page = requests.get(url)
+                    # with open('temp.jpg', 'wb') as f:
+                    #     f.write(page.content)
+                    if image['tags'] != []:
+                        print('tag found in image and needs to be examined')
+                        print(image['tags'])
+
+                    metadata = {'url': url, 'nsfw': image['nsfw'], 'filetype': image['link'][-3:], 'sizetype': None, 'categories': album_categories}
+                    
+                    self.add_to_db(page.content, metadata)
             else:
                 print(item['link'])
             i += 1
-        print()
-        gen = [] # Some sort of generator
-        return gen
+            if i > 5: break ## break
+        
+        return self.generator_from_category(category)
 
     def get_images_from_category(self, tag):
         """ 
