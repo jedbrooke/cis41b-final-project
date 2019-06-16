@@ -160,7 +160,7 @@ class SqlDb():
             self.cur.execute('''CREATE TABLE Images (
                         id INTEGER NOT NULL PRIMARY KEY,
                         file BLOB,
-                        url TEXT,
+                        url TEXT UNIQUE ON CONFLICT IGNORE,
                         nsfw INTEGER,
                         filetype INTEGER,
                         sizetype INTEGER,
