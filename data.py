@@ -43,6 +43,9 @@ class SqlDb():
         img_cat_list = [(img_id, category_id) for i in metadata['categories']]
         self.cur.executemany('''INSERT INTO  Image_Categories (img_id, category_id) VALUES (?, ?) ''', img_cat_list)
         self.conn.commit() ## Is there overhead for doing this a lot?
+
+    def download_nimages_with_category(self, category, n = 60, queue = None):
+        """ 
         Downloads the images to the db with multithreading
         If image does not have tag, assume the tag is not in the immage
         Returns a generator that returns the images with their data
