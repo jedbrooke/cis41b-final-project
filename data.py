@@ -28,8 +28,21 @@ class SqlDb():
         pass
 
 
-    def download_nimages_with_category(self, category, n, queue):
+    def add_to_db(self, image, metadata):
         """ 
+        Adds image to db
+        image is an image binary
+        """
+        self.cur.execute('''INSERT INTO  Filetypes (filetype) VALUES (?) ''', (metadata['filetype'],))
+        self.cur.executemany('''INSERT INTO  Categories (category) VALUES (?) ''', metadata['categories'])
+        self.cur.execute('''INSERT INTO  Images (file, url, nsfw, sizetype) VALUES (?, ?, ?, ?); ''', (image, metadata['url'], metadata['nsfw'], metadata['sizetype']))
+        img_id = self.cur.execute('''SELECT id FROM Images WHERE url = (?)''', (metadata['url'],)).fetchone()[0]
+        sql_stmt = '''SELECT id FROM Categories WHERE category in ({})'''.format(','.join(['?']*len(metadata['categories'])))
+        args = [i[0] for i in metadata['categories']]
+        category_id = self.cur.execute(sql_stmt, args).fetchone()[0]
+        img_cat_list = [(img_id, category_id) for i in metadata['categories']]
+        self.cur.executemany('''INSERT INTO  Image_Categories (img_id, category_id) VALUES (?, ?) ''', img_cat_list)
+        self.conn.commit() ## Is there overhead for doing this a lot?
         Downloads the images to the db with multithreading
         If image does not have tag, assume the tag is not in the immage
         Returns a generator that returns the images with their data
