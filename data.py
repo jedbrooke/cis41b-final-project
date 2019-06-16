@@ -108,13 +108,15 @@ class SqlDb():
     def get_image(self, img_id):
         pass
 
-    def get_count_of_tag(self, tag):
+    def get_count_of_tags(self):
         """ 
-        REturns a tuple of tag and count
+        Returns a list of tuples of tag and count
         """
-        tag = []
-        count = []
-        return (tag, count)
+        # Get list of all tags
+        self.cur.execute('''SELECT Categories.category, count(Image_Categories.category_id)
+                            FROM Image_Categories JOIN Categories ON Image_Categories.category_id = Categories.id 
+                            GROUP BY Image_Categories.category_id;''')
+        return self.cur.fetchall()
 
     def change_tag(self): # optional
         """ 
@@ -126,8 +128,7 @@ class SqlDb():
         """ 
         Returns a list of all the categories on the db (also count of each category)
         """
-        categories = []
-        return categories
+        return self.cur.execute('SELECT category FROM Categories;').fetchall()
 
     def delete_images(self, img_list):
         """ 
