@@ -181,6 +181,7 @@ class SqlDb():
             self.cur.execute('''CREATE TABLE Image_Categories (
                         img_id INTEGER NOT NULL,
                         category_id INTEGER NOT NULL,
+                        PRIMARY KEY (img_id, category_id) ON CONFLICT IGNORE,
                         FOREIGN KEY (img_id) REFERENCES Images(id),
                         FOREIGN KEY (category_id) REFERENCES Categories(id)
                         );''')
