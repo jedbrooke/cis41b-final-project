@@ -115,8 +115,10 @@ class Form(tk.Frame):
 
     def add_field(self,field):
         self.fields.append(field)
-        if field.ftype == "label":
-            field.data = [f for f in self.fields if f.name == field.data][0]
+        if field.ftype == "for_label":
+            var = [f for f in self.fields if f.name == field.data[0]][0]
+            print(var.data)
+            field.data[1]["textvariable"] = var.data
 
     def submit(self):
         try:
@@ -131,7 +133,10 @@ class Form(tk.Frame):
     #form submit functions
     def print_user_text(self):
         field = [field for field in self.fields if field.name == "user_text"][0]
+        text = "Hello, " + field.data.get()
         print("Hello,",field.data.get())
+        label = [field for field in self.fields if field.name == "display_user_text"][0]
+        label.data.set(text)
 
 class Field():
     def __init__(self, ftype, name, data):
@@ -214,7 +219,15 @@ class Window():
         l = tk.Label(parent,text=label.text.strip())
         l.grid(TagUtility.get_grid_args(label))
         if TagUtility.get_attribute(label,"for"):
-            self.form.add_field(Field("label",TagUtility.get_attribute(label,"name"),TagUtility.get_attribute(label,"for")))
+            name = TagUtility.get_attribute(label,"name")
+            label_for = TagUtility.get_attribute(label,"for")
+            self.form.add_field(Field("for_label",name,[label_for,l]))
+        ltype = TagUtility.get_attribute(label,"type")
+        if ltype and ltype == "display":
+            name = TagUtility.get_attribute(label,"name")
+            tksv =  tk.StringVar()
+            l["textvariable"] = tksv
+            self.form.add_field(Field("label",name,tksv))
         return l
 
     def create_button(self,button,parent):
