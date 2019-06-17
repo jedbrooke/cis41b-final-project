@@ -102,15 +102,24 @@ class SqlDb():
     def get_image(self, img_id):
         pass
 
-    def get_count_of_tags(self):
+    def get_count_of_tags(self, category = None):
         """ 
         Returns a list of tuples of tag and count
         """
+        if category == None:
         # Get list of all tags
         self.cur.execute('''SELECT Categories.category, count(Image_Categories.category_id)
                             FROM Image_Categories JOIN Categories ON Image_Categories.category_id = Categories.id 
                             GROUP BY Image_Categories.category_id;''')
         return self.cur.fetchall()
+        else:
+            self.cur.execute('''SELECT c.category, count(ic.category_id) 
+                                FROM Images i JOIN Image_Categories ic ON i.id = ic.img_id JOIN Categories c ON ic.category_id = c.id 
+                                WHERE i.id IN (SELECT i.id FROM Images i 
+                                                JOIN Image_Categories ic ON i.id = ic.img_id JOIN Categories c ON ic.category_id = c.id 
+                                                WHERE c.category = ?)
+                                GROUP BY ic.category_id;''', (category,)) 
+
 
     def change_tag(self): # optional
         """ 
