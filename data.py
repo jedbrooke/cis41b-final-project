@@ -120,7 +120,6 @@ class SqlDb():
                                                 WHERE c.category = ?)
                                 GROUP BY ic.category_id;''', (category,)) 
 
-
     def change_tag(self): # optional
         """ 
         Change tag of images 
