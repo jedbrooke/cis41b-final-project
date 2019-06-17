@@ -85,13 +85,13 @@ class SqlDb():
 
     def get_images_from_category(self, category):
         """ 
-        returns that generagtor of images
+        returns a generator of images and metadata
         """
         while True:
-            results = self.cur.execute('''SELECT url FROM IMAGES ''').fetchall()
+            results = self.cur.execute('''SELECT * FROM IMAGES ''').fetchall()
             if results:
                 for result in results:
-                    yield result[0]
+                    yield result
                 break ## Should this be stop iteratrion?
             else:
                 break ## Should this be stop iteratrion?
