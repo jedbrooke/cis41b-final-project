@@ -134,12 +134,17 @@ class SqlDb():
         self.conn.commit()
         return False
 
-    def export_images(self, tag, directory):
+    def export_images(self, category, directory = 'imgs'):
         """ 
         Saves all the images with tag into directory        
         """
-        success = True
-        return success
+        gen = self.get_images_from_category(category)
+        for i in gen:
+            filename = i[2][-11:] # This should be an RE
+            with open(os.path.join(directory, filename), 'wb') as f:
+                f.write(i[1])
+                print('Saved image', filename)
+        return True
 
     def create_db(self):
         self.conn = sqlite3.connect(self.DB_NAME)
