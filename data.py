@@ -121,13 +121,15 @@ class SqlDb():
         """
         return self.cur.execute('SELECT category FROM Categories;').fetchall()
 
-    def delete_images(self, img_list):
+    def delete_images(self, img_urls):
         """ 
-        Deletes images from list
+        Deletes images from list, img_list is a list of urls
         """
-        success = True
-        return success
-
+        ### THIS NEEDS TO BE RESOLVED WITH CASCADE DELETE AND FIX THAT WEIRD MAIN TABLE
+        for img_url in img_urls:
+            self.cur.execute('DELETE FROM Images WHERE url = ?', (img_url,) )
+        self.conn.commit()
+        return False
 
     def export_images(self, tag, directory):
         """ 
