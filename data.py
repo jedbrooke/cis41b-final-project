@@ -40,8 +40,8 @@ class SqlDb():
         img_id = self.cur.execute('''SELECT id FROM Images WHERE url = (?)''', (metadata['url'],)).fetchone()[0]
         sql_stmt = '''SELECT id FROM Categories WHERE category in ({})'''.format(','.join(['?']*len(metadata['categories'])))
         args = [i[0] for i in metadata['categories']]
-        category_id = self.cur.execute(sql_stmt, args).fetchone()[0]
-        img_cat_list = [(img_id, category_id) for i in metadata['categories']]
+        category_id = self.cur.execute(sql_stmt, args).fetchall()[0]
+        img_cat_list = [(img_id, i[0]) for i in self.cur.execute(sql_stmt, args).fetchall()]
         self.cur.executemany('''INSERT INTO  Image_Categories (img_id, category_id) VALUES (?, ?) ''', img_cat_list)
         self.conn.commit() ## Is there overhead for doing this a lot?
 
