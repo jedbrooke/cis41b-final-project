@@ -112,7 +112,7 @@ class SqlDb():
                             FROM Image_Categories JOIN Categories ON Image_Categories.category_id = Categories.id 
                             GROUP BY Image_Categories.category_id;''')
         return self.cur.fetchall()
-        else:
+        else: # only get tags associated with some tag
             self.cur.execute('''SELECT c.category, count(ic.category_id) 
                                 FROM Images i JOIN Image_Categories ic ON i.id = ic.img_id JOIN Categories c ON ic.category_id = c.id 
                                 WHERE i.id IN (SELECT i.id FROM Images i 
