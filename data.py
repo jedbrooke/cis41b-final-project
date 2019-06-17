@@ -193,8 +193,13 @@ if __name__ == "__main__":
     # gen = db.download_nimages_with_category('cats', 30)
 
     # for i in gen:
-    #     print(i)
+    #     print(i[2])
     tag_counts = db.get_count_of_tags()
     print(tag_counts)
     list_of_categories = db.get_categories()
     print(list_of_categories)
+    results = db.get_images_from_category('cats')
+    for i in results:
+        with open(i[2][-10:], 'wb') as f:
+            f.write(i[1])
+    
