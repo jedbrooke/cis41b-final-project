@@ -52,7 +52,7 @@ class SqlDb():
         Returns a generator that returns the images with their data
         """
         headers = {'Authorization': 'Client-ID ' + self.CLIENT}
-        url = 'https://api.imgur.com/3/gallery/search/?q=cats'
+        url = 'https://api.imgur.com/3/gallery/search/?q={}'.format(category)
         response = requests.request('GET', url, headers = headers)
         # r = requests.get("https://api.imgur.com/3/tags", headers={'Authorization': self.CLIENT})
         data = json.loads(response.text)
