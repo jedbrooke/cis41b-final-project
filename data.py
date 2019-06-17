@@ -75,6 +75,9 @@ class SqlDb():
 
                     metadata = {'url': url, 'nsfw': image['nsfw'], 'filetype': image['link'][-3:], 'sizetype': None, 'categories': album_categories}
                     
+                    if metadata['categories'] == []: # Sometimes an album won't get tagged, but will show up in the title, force the category
+                        metadata['categories'] = [category]
+
                     self.add_to_db(page.content, metadata)
             else:
                 print(item['link'])
