@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup as bs
 import tkinter as tk
 from tkinter import Canvas
-from PIL import ImageTk,Image 
+from PIL import ImageTk,Image
 
 def display_results(images):
     #for image in images:
@@ -42,6 +42,7 @@ class TagUtility():
         "listbox":LISTBOX_ARGS,
         "button":BUTTON_ARGS,
     }
+
     def __init__(self):
         pass
 
@@ -60,6 +61,8 @@ class TagUtility():
         try:
             return cast(tag[attr])
         except KeyError as e:
+            return None
+        except ValueError as e:
             return None
 
     @staticmethod
@@ -119,6 +122,9 @@ class Form(tk.Frame):
             var = [f for f in self.fields if f.name == field.data[0]][0]
             print(var.data)
             field.data[1]["textvariable"] = var.data
+    def add_to_multiple_select(self,field_name,data):
+        sel = self.get_field(field_name)
+        sel.data.append(data)
 
     def submit(self):
         try:
@@ -132,11 +138,19 @@ class Form(tk.Frame):
 
     #form submit functions
     def print_user_text(self):
-        field = [field for field in self.fields if field.name == "user_text"][0]
+        field = self.get_field("user_text")
         text = "Hello, " + field.data.get()
-        print("Hello,",field.data.get())
-        label = [field for field in self.fields if field.name == "display_user_text"][0]
+        choice = self.get_field("radio-choose")
+        print([c[0].get() for c in choice.data])
+        print([c[1] for c in choice.data])
+        choices = [c[1] for c in choice.data if c[0].get() != 0]
+        text += ". You chose: " + ",".join(choices)
+        print(text)
+        label = self.get_field("display_user_text")
         label.data.set(text)
+
+    def get_field(self,name):
+        return [field for field in self.fields if field.name == name][0]
 
 class Field():
     def __init__(self, ftype, name, data):
@@ -162,6 +176,8 @@ class Window():
             "img":self.create_image,
             "form":self.create_form,
             "input":self.create_input,
+            "select":self.create_select,
+            "option":self.create_option,
         }
 
         self.buttons = {}
@@ -198,11 +214,11 @@ class Window():
             if tag.name is not None:
                 self.HEAD_ACTIONS[tag.name](tag)
 
-    def buildBody(self,data,container):
+    def buildBody(self,data,container,*args,**kwargs):
         elements = []
         for tag in data:
             if tag.name is not None:
-                elements.append(self.BODY_ACTIONS[tag.name](tag,container))
+                elements.append(self.BODY_ACTIONS[tag.name](tag,container,*args,**kwargs))
         return elements
 
     def buildList(self,elements,listbox):
@@ -237,12 +253,12 @@ class Window():
         b.bind("<Button-1>",self.button_clicked)
         return b
 
-    def create_frame(self,frame,parent):
+    def create_frame(self,frame,parent,*args,**kwargs):
         if TagUtility.get_attribute(frame,"scrolling",TagUtility.bool_from_str):
-            return self.create_scrollframe(frame,parent)
+            return self.create_scrollframe(frame,parent,*args,**kwargs)
         else:
             tk_frame = tk.Frame(parent)
-            elements = self.buildBody(frame,tk_frame)
+            elements = self.buildBody(frame,tk_frame,*args,**kwargs)
             tk_frame.grid(TagUtility.get_grid_args(frame))
             return (tk_frame,elements)
 
@@ -264,7 +280,7 @@ class Window():
             return tk_listbox
 
             
-    def create_scrollframe(self,scrollframe,parent):
+    def create_scrollframe(self,scrollframe,parent,*args,**kwargs):
         outer_frame = tk.Frame(parent,relief=tk.GROOVE,bd=1)
         outer_frame.grid(TagUtility.get_grid_args(scrollframe))
 
@@ -279,7 +295,7 @@ class Window():
 
         canvas.bind("<Configure>",lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
 
-        return (outer_frame,self.buildBody(scrollframe,inner_frame))
+        return (outer_frame,self.buildBody(scrollframe,inner_frame,*args,**kwargs))
 
     def create_scrollbox(self,scrollbox,parent):
         frame = tk.Frame(parent)
@@ -329,7 +345,7 @@ class Window():
     def create_text_input(self,input_tag,parent):
         var = tk.StringVar()
         entry = tk.Entry(parent,textvariable=var)
-        entry.grid()
+        entry.grid(TagUtility.get_grid_args(input_tag))
         self.form.add_field(Field(str,TagUtility.get_attribute(input_tag,"name"),var))
         return entry
 
@@ -337,6 +353,43 @@ class Window():
         button = tk.Button(parent, command=lambda : self.form.submit(), text="Submit")
         button.grid(TagUtility.get_grid_args(input_tag))
         return button
+
+    def create_radio_input(self,input_tag,parent):
+        pass
+
+    def create_select(self,select,parent):
+        multiple = TagUtility.get_attribute(select,"multiple",TagUtility.bool_from_str)
+        name = TagUtility.get_attribute(select,"name")
+        if multiple:
+            self.form.add_field(Field("multiple_select",name,[]))
+            self.create_frame(select,parent,multiple=True,name=name)
+        else:
+            tksv = tk.StringVar()
+            tksv.set(select.find_all("option")[0]['value'])
+            self.form.add_field(Field("select",name,tksv))
+            self.create_frame(select,parent,variable=tksv,multiple=False)
+
+    def create_option(self,option,parent,variable=None,multiple=False,name=None):
+        value = TagUtility.get_attribute(option,"value")
+        text = option.text.strip()
+        if not value:
+            value = text
+        if multiple:
+            tkiv = tk.IntVar()
+            self.form.add_to_multiple_select(name,(tkiv,value))
+            b = tk.Checkbutton(parent,text=text,variable=tkiv)
+
+        else:
+            b = tk.Radiobutton(parent,text=text,variable=variable,value=value)
+
+        b.grid(TagUtility.get_grid_args(option))
+
+        if len(option.find_all()) is 0:
+            return b
+        else :
+            return (b,self.buildBody(option,parent))
+       
+
 
 
 BUTTON_TYPE_ACTIONS = {
@@ -347,6 +400,7 @@ BUTTON_TYPE_ACTIONS = {
 
 INPUT_TYPE_ACTIONS = {
     "text":Window.create_text_input,
+    "radio":Window.create_radio_input,
     "submit":Window.create_submit_input,
 }
 
