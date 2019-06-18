@@ -124,22 +124,6 @@ class Form():
     def print_all_fields(self):
         print(*self.fields)
 
-    #form submit functions
-    def print_user_text(self):
-        field = self.get_field("user_text")
-        text = "Hello, " + field.data.get()
-        choice = self.get_field("radio-choose")
-        print([c[0].get() for c in choice.data])
-        print([c[1] for c in choice.data])
-        choices = [c[1] for c in choice.data if c[0].get() != 0]
-        text += ". You chose: " + ",".join(choices)
-        lb_choices = [self.get_field("listbox_test").data[1][i] for i in self.get_field("listbox_test").data[0].curselection()]
-        print(lb_choices)
-        text += " and " + ",".join(lb_choices)
-        print(text) 
-        label = self.get_field("display_user_text")
-        label.data.set(text)
-
     def get_field(self,name):
         return [field for field in self.fields if field.name == name][0]
 
@@ -418,9 +402,3 @@ INPUT_TYPE_ACTIONS = {
     "radio":Window.create_radio_input,
     "submit":Window.create_submit_input,
 }
-
-def main():
-    Window(TagUtility.get_html("gui_pages/testing.html"),main=True)
-
-if __name__ == '__main__':
-    main()
