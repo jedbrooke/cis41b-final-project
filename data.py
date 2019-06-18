@@ -86,6 +86,9 @@ class SqlDb():
                     i += 1
                     print('Downloaded', i, 'images of', n)
 
+                if i > n: 
+                    break   
+
             if i > n: 
                 break 
             # Get the next page of images
