@@ -3,17 +3,6 @@ import tkinter as tk
 from tkinter import Canvas
 from PIL import ImageTk,Image
 
-def display_results(images):
-    #for image in images:
-    #generate html for the images, pass that to gui Window
-
-    pass
-
-def generate_tag_count_graph(tag_counts):
-    #plot the tags based on occurrence
-    #tag_counts is tuple of list of tags and list of counts
-    pass
-
 """utility functions"""
 
 class TagUtility():
@@ -47,7 +36,7 @@ class TagUtility():
         pass
 
     @staticmethod
-    def get_xml(path):
+    def get_html(path):
         file = open(path)
         soup = bs(file,"lxml")
         return soup
@@ -110,11 +99,15 @@ class Button():
     def print_hello():
         print("hello")
 
+    @staticmethod
+    def quit():
+        print("press the red button to close the window")
+
 class Form(tk.Frame):
-    def __init__(self,parent=None,action=None,fields=[]):
+    def __init__(self,parent=None,action=None):
         super().__init__(parent)
         self.action = action
-        self.fields = fields
+        self.fields = []
 
     def add_field(self,field):
         self.fields.append(field)
@@ -122,6 +115,7 @@ class Form(tk.Frame):
             var = [f for f in self.fields if f.name == field.data[0]][0]
             print(var.data)
             field.data[1]["textvariable"] = var.data
+
     def add_to_multiple_select(self,field_name,data):
         sel = self.get_field(field_name)
         sel.data.append(data)
@@ -145,7 +139,10 @@ class Form(tk.Frame):
         print([c[1] for c in choice.data])
         choices = [c[1] for c in choice.data if c[0].get() != 0]
         text += ". You chose: " + ",".join(choices)
-        print(text)
+        lb_choices = [self.get_field("listbox_test").data[1][i] for i in self.get_field("listbox_test").data[0].curselection()]
+        print(lb_choices)
+        text += " and " + ",".join(lb_choices)
+        print(text) 
         label = self.get_field("display_user_text")
         label.data.set(text)
 
@@ -157,7 +154,6 @@ class Field():
         self.ftype = ftype
         self.name = name
         self.data = data
-
 
 class Window():
     """docstring for Window"""
@@ -171,7 +167,7 @@ class Window():
             "button":self.create_button,
             "label":self.create_label,
             "div":self.create_frame,
-            "scrollbox":self.create_scrollbox,
+            "scrollbox":lambda *args, **kwargs: self.create_scrollbox(scrolling=True,*args,**kwargs),
             "listbox":self.create_listbox,
             "img":self.create_image,
             "form":self.create_form,
@@ -203,7 +199,7 @@ class Window():
         self.win.mainloop()
 
     def _initPath(self,path):
-            self.soup = TagUtility.get_xml(path)   
+            self.soup = TagUtility.get_html(path)   
 
     def buildElements(self):
         self.buildHead(self.soup.head)
@@ -222,7 +218,9 @@ class Window():
         return elements
 
     def buildList(self,elements,listbox):
-        listbox.insert(tk.END,*[item.text for item in elements.find_all("li")])
+        l = [item.text for item in elements.find_all("li")]
+        listbox.insert(tk.END,*l)
+        return l
 
 
     def set_title(self,title):
@@ -247,7 +245,15 @@ class Window():
         return l
 
     def create_button(self,button,parent):
-        b = tk.Button(parent,text=button.text.strip())
+        if len(button.find_all("img")) != 0:
+            print("setting button icon")
+            print(button.find_all("img")[0]["src"])
+            icon = TagUtility.get_image(src=button.find_all("img")[0]["src"],target_size=20)
+            b = tk.Button(parent,image=icon,text=button.text.strip(),height=20,width=20)
+            self.images.append(icon
+                )
+        else: 
+            b = tk.Button(parent,text=button.text.strip())
         b.grid(TagUtility.get_grid_args(button))
         self.buttons[str(b)] = Button(**TagUtility.get_button_args(button))
         b.bind("<Button-1>",self.button_clicked)
@@ -270,12 +276,29 @@ class Window():
         return (self.form,elements)
 
 
-    def create_listbox(self,listbox,parent): 
-        if TagUtility.get_attribute(listbox,"scrolling",TagUtility.bool_from_str):
-            return self.create_scrollbox(listbox,parent)
+    def create_listbox(self,listbox,parent,scrolling=False):
+        if TagUtility.get_attribute(listbox,"scrolling",TagUtility.bool_from_str)\
+         or scrolling:
+            frame = tk.Frame(parent)
+            parent = frame
+            scrolling = True
+
+        tk_listbox = tk.Listbox(parent,**TagUtility.get_listbox_args(listbox))
+        list_items = self.buildList(listbox,tk_listbox)
+
+        if self.form:
+            name = TagUtility.get_attribute(listbox,"name")
+            self.form.add_field(Field("listbox",name,[tk_listbox,list_items]))
+
+        if scrolling:
+            scrollbar = tk.Scrollbar(frame,orient=tk.VERTICAL)
+            scrollbar.grid(row=0,column=1,sticky=tk.N+tk.S)
+            tk_listbox['yscrollcommand'] = scrollbar.set
+            tk_listbox.grid(row=0,column=0,sticky=tk.N+tk.S+tk.E+tk.W)
+            scrollbar['command'] = tk_listbox.yview
+            frame.grid(TagUtility.get_grid_args(listbox))
+            return frame
         else :
-            tk_listbox = tk.Listbox(parent,**TagUtility.get_listbox_args(listbox))
-            self.buildList(listbox,tk_listbox)
             tk_listbox.grid(TagUtility.get_grid_args(listbox))
             return tk_listbox
 
@@ -297,16 +320,7 @@ class Window():
 
         return (outer_frame,self.buildBody(scrollframe,inner_frame,*args,**kwargs))
 
-    def create_scrollbox(self,scrollbox,parent):
-        frame = tk.Frame(parent)
-        scrollbar = tk.Scrollbar(frame,orient=tk.VERTICAL)
-        scrollbar.grid(row=0,column=1,sticky=tk.N+tk.S)
-        listbox = tk.Listbox(frame,**TagUtility.get_listbox_args(scrollbox),yscrollcommand=scrollbar.set)
-        listbox.grid(row=0,column=0,sticky=tk.N+tk.S+tk.E+tk.W)
-        self.buildList(scrollbox,listbox)
-        scrollbar['command'] = listbox.yview
-        frame.grid(TagUtility.get_grid_args(scrollbox))
-        return frame
+    # def create_scrollbox(self,scrollbox,parent,tk_listbox): REMOVED
 
     def create_image(self,tag,parent):
         src = TagUtility.get_attribute(tag,"src")
@@ -331,7 +345,7 @@ class Window():
         self.win.destroy()
 
     def link_clicked(self,button):
-        Window(TagUtility.get_xml(f"gui_pages/{button.link}"),master=self.win)
+        Window(TagUtility.get_html(f"gui_pages/{button.link}"),master=self.win)
 
     def button_action(self,button):
         try:
@@ -344,6 +358,9 @@ class Window():
 
     def create_text_input(self,input_tag,parent):
         var = tk.StringVar()
+        default = TagUtility.get_attribute(input_tag,"default")
+        if default:
+            var.set(default)
         entry = tk.Entry(parent,textvariable=var)
         entry.grid(TagUtility.get_grid_args(input_tag))
         self.form.add_field(Field(str,TagUtility.get_attribute(input_tag,"name"),var))
@@ -388,10 +405,10 @@ class Window():
             return b
         else :
             return (b,self.buildBody(option,parent))
+
+    def post(self,*args,**kwargs):
+        pass
        
-
-
-
 BUTTON_TYPE_ACTIONS = {
     "back":Window.back_button,
     "link":Window.link_clicked,
@@ -405,7 +422,7 @@ INPUT_TYPE_ACTIONS = {
 }
 
 def main():
-    Window(TagUtility.get_xml("gui_pages/main.html"),main=True)
+    Window(TagUtility.get_html("gui_pages/testing.html"),main=True)
 
 if __name__ == '__main__':
     main()
