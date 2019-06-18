@@ -8,6 +8,7 @@ import os
 import requests
 import json
 from PIL import ImageTk, Image 
+import re 
 
 class SqlDb():
     DB_NAME = 'images.db'
@@ -184,7 +185,8 @@ class SqlDb():
             os.makedirs(os.path.join(directory, category))
 
         for i in gen:
-            filename = i[2][-11:] # This should be an RE
+            m = re.search("[\w]*\.[\w]*$", i[2])
+            filename = i[2][m.start():m.end()] # This should be an RE
             with open(os.path.join(directory, category, filename), 'wb') as f:
                 f.write(i[1])
                 print('Saved image', filename)
