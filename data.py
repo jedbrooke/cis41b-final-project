@@ -56,29 +56,30 @@ class SqlDb():
         If image does not have tag, assume the tag is not in the immage
         Returns a generator that returns the images with their data
         """
-        page = 1
+        page_no = 1
         i = 1
         while i < n:
         headers = {'Authorization': 'Client-ID ' + self.CLIENT}
-        url = 'https://api.imgur.com/3/gallery/search/?q={}'.format(category)
+            url = 'https://api.imgur.com/3/gallery/search/top/all/{}?q={} ext: jpg NOT album'.format(page_no, category)
         response = requests.request('GET', url, headers = headers)
         # r = requests.get("https://api.imgur.com/3/tags", headers={'Authorization': self.CLIENT})
         data = json.loads(response.text)
         data = data['data']
             
-        for item in data:
-                if 'images' in item.keys():
+            for image in data:
+                # if 'images' in item.keys():
+                if image['link'][-3:] != 'jpg':
+                    continue
+                album_categories = [(i['name'],) for i in image['tags']] 
 
-                album_categories = [(i['name'],) for i in item['tags']] 
-
-                for image in item['images']:
+                # for image in item['images']:
                     url = image['link']
                     page = requests.get(url)
                     # with open('temp.jpg', 'wb') as f:
                     #     f.write(page.content)
-                    if image['tags'] != []:
-                        print('tag found in image and needs to be examined')
-                        print(image['tags'])
+                # if image['tags'] != []:
+                #     print('tag found in image and needs to be examined')
+                #     print(image['tags'])
 
                     metadata = {'url': url, 'nsfw': image['nsfw'], 'filetype': image['link'][-3:], 'sizetype': None, 'categories': album_categories, 'reject': 0}
                     
@@ -94,12 +95,12 @@ class SqlDb():
                     print('Downloaded', i, 'images of', n)
                     if i > n: 
                         break   
+                # else:
+                #     print('No key called `images` found')
+                #     print(item['link'])
             if i > n: 
                 break 
-            else:
-                print('No key called `images` found')
-                print(item['link'])
-            page += 1
+            page_no += 1
         
         return self.get_images_from_category(category)
 
