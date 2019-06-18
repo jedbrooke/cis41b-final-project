@@ -149,6 +149,10 @@ class SqlDb():
         self.conn.commit()
         return False
 
+    def reject_images(self, img_urls):
+        pass
+
+
     def export_images(self, category, directory = 'imgs'):
         """ 
         Saves all the images with tag into directory        
@@ -184,6 +188,7 @@ class SqlDb():
                         nsfw INTEGER,
                         filetype INTEGER,
                         sizetype INTEGER,
+                        reject INTEGER,
                         FOREIGN KEY (filetype) REFERENCES Filetypes(id),
                         FOREIGN KEY (sizetype) REFERENCES Sizes(id)                  
                         );''')
