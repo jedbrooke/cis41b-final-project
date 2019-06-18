@@ -165,8 +165,12 @@ class SqlDb():
         return False
 
     def reject_images(self, img_urls):
-        pass
-
+        """  
+        Set some list of imgurls to reject
+        """
+        for img_url in img_urls:
+            self.cur.execute('''UPDATE Images SET reject = 1 WHERE url = ?;''', (img_url,))
+        self.conn.commit()
 
     def export_images(self, category, directory = 'imgs'):
         """ 
