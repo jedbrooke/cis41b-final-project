@@ -9,8 +9,8 @@ class TestButton(Button):
         print("hello")
         
 class TestForm(Form):
-    def __init__(self):
-        super().__init__()
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
 
     def submit(self):
         field = self.get_field("user_text")
