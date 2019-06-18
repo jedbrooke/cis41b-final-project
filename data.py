@@ -80,7 +80,11 @@ class SqlDb():
                     metadata = {'url': url, 'nsfw': image['nsfw'], 'filetype': image['link'][-3:], 'sizetype': None, 'categories': album_categories, 'reject': 0}
                     
                     if metadata['categories'] == []: # Sometimes an album won't get tagged, but will show up in the title, force the category
-                        metadata['categories'] = [category]
+                        metadata['categories'] = [(category,)]
+
+                    # Some images don't have the tag, but show up in the results because the word appears in the title
+                    if category not in metadata['categories']: 
+                        metadata['categories'].append((category,))
 
                     self.add_to_db(page.content, metadata)
                     i += 1
