@@ -241,7 +241,7 @@ class SqlDb():
 if __name__ == "__main__":
     db = SqlDb()
     category = 'dogs'
-    gen = db.download_nimages_with_category(category, 5)
+    gen = db.download_nimages_with_category(category, 100)
 
     # for i in gen:
     #     print(i[2])
@@ -256,7 +256,7 @@ if __name__ == "__main__":
     db.export_images(category)
 
     category = 'cats'
-    gen = db.download_nimages_with_category(category, 5)
+    gen = db.download_nimages_with_category(category, 100)
 
     # for i in gen:
     #     print(i[2])
