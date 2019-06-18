@@ -63,7 +63,7 @@ class SqlDb():
         data = data['data']
         i = 1
         for item in data:
-            print(i)
+            # print(i)
 
             if 'images' in item.keys():
                 album_categories = [(i['name'],) for i in item['tags']] 
