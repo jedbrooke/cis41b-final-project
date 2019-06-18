@@ -83,6 +83,12 @@ class SqlDb():
                         metadata['categories'] = [category]
 
                     self.add_to_db(page.content, metadata)
+                    i += 1
+                    print('Downloaded', i, 'images of', n)
+                    if i > n: 
+                        break   
+            if i > n: 
+                break 
             else:
                 print(item['link'])
             i += 1
