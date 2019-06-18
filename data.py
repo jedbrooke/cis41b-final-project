@@ -158,7 +158,7 @@ class SqlDb():
         """ 
         Deletes images from list, img_list is a list of urls
         """
-        ### THIS NEEDS TO BE RESOLVED WITH CASCADE DELETE AND FIX THAT WEIRD MAIN TABLE
+        ### THIS COULD BE RESOLVED WITH CASCADE DELETE AND ONLY IF THAT WEIRD MAIN TABLE ISSUE IS FIXED
         for img_url in img_urls:
             self.cur.execute('DELETE FROM Images WHERE url = ?', (img_url,) )
         self.conn.commit()
