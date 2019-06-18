@@ -154,9 +154,13 @@ class SqlDb():
         Saves all the images with tag into directory        
         """
         gen = self.get_images_from_category(category)
+
+        if not os.path.exists(os.path.join(directory, category)):
+            os.makedirs(os.path.join(directory, category))
+
         for i in gen:
             filename = i[2][-11:] # This should be an RE
-            with open(os.path.join(directory, filename), 'wb') as f:
+            with open(os.path.join(directory, category, filename), 'wb') as f:
                 f.write(i[1])
                 print('Saved image', filename)
         return True
