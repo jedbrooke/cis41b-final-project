@@ -128,10 +128,15 @@ class SqlDb():
         """
         pass
 
-    def get_categories(self):
+    def get_categories(self, count = False):
         """ 
         Returns a list of all the categories on the db (also count of each category)
         """
+        if count:
+            return self.cur.execute('''SELECT c.category, COUNT(ic.category_id) 
+                                FROM Categories c JOIN Image_Categories ic ON c.id = ic.category_id 
+                                GROUP BY ic.category_id;''').fetchall()
+        else: 
         return self.cur.execute('SELECT category FROM Categories;').fetchall()
 
     def delete_images(self, img_urls):
