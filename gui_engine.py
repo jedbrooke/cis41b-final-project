@@ -158,6 +158,7 @@ class Window():
         self.button = button if button else Button
         self.images = []
         self.form = form
+        self.frames = {}
 
         if main:
             self.win = tk.Tk()
@@ -242,9 +243,14 @@ class Window():
         if TagUtility.get_attribute(frame,"scrolling",TagUtility.bool_from_str):
             return self.create_scrollframe(frame,parent,*args,**kwargs)
         else:
+
             tk_frame = tk.Frame(parent)
             elements = self.buildBody(frame,tk_frame,*args,**kwargs)
             tk_frame.grid(TagUtility.get_grid_args(frame))
+            frame_id = TagUtility.get_attribute(frame,"id")
+            if not frame_id:
+                frame_id = str(tk_frame)
+            self.frames[frame_id] = tk_frame
             return (tk_frame,elements)
 
 
@@ -254,6 +260,10 @@ class Window():
         form_frame = tk.Frame(parent)
         elements = self.buildBody(form,form_frame)
         form_frame.grid(TagUtility.get_grid_args(form))
+        frame_id = TagUtility.get_attribute(form,"id")
+        if not frame_id:
+            frame_id = str(form_frame)
+        self.frames[frame_id] = form_frame
         return (form_frame,elements)
 
 
@@ -298,6 +308,11 @@ class Window():
         canvas.create_window((0,0),window=inner_frame,anchor='nw')
 
         canvas.bind("<Configure>",lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+
+        frame_id = TagUtility.get_attribute(scrollframe,"id")
+        if not frame_id:
+            frame_id = str(inner_frame)
+        self.frames[frame_id] = inner_frame
 
         return (outer_frame,self.buildBody(scrollframe,inner_frame,*args,**kwargs))
 
@@ -390,6 +405,9 @@ class Window():
             return b
         else :
             return (b,self.buildBody(option,parent))
+
+    def get_frame_by_id(self,_id):
+        return self.frames[_id]
        
 BUTTON_TYPE_ACTIONS = {
     "back":Window.back_button,
