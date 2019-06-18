@@ -55,17 +55,19 @@ class SqlDb():
         If image does not have tag, assume the tag is not in the immage
         Returns a generator that returns the images with their data
         """
+        page = 1
+        i = 1
+        while i < n:
         headers = {'Authorization': 'Client-ID ' + self.CLIENT}
         url = 'https://api.imgur.com/3/gallery/search/?q={}'.format(category)
         response = requests.request('GET', url, headers = headers)
         # r = requests.get("https://api.imgur.com/3/tags", headers={'Authorization': self.CLIENT})
         data = json.loads(response.text)
         data = data['data']
-        i = 1
+            
         for item in data:
-            # print(i)
+                if 'images' in item.keys():
 
-            if 'images' in item.keys():
                 album_categories = [(i['name'],) for i in item['tags']] 
 
                 for image in item['images']:
@@ -96,7 +98,7 @@ class SqlDb():
             else:
                 print('No key called `images` found')
                 print(item['link'])
-        
+            page += 1
         
         return self.get_images_from_category(category)
 
