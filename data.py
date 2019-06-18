@@ -91,7 +91,9 @@ class SqlDb():
         returns a generator of images and metadata
         """
         while True:
-            results = self.cur.execute('''SELECT * FROM IMAGES ''').fetchall()
+            results = self.cur.execute('''SELECT * FROM Images i JOIN Image_Categories ic ON i.id = ic.img_id
+                                            JOIN Categories c ON ic.category_id = c.id 
+                                            WHERE c.category = ?''', (category,)).fetchall()
             if results:
                 for result in results:
                     yield result
