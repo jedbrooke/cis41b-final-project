@@ -121,6 +121,7 @@ class SqlDb():
                                                 JOIN Image_Categories ic ON i.id = ic.img_id JOIN Categories c ON ic.category_id = c.id 
                                                 WHERE c.category = ?)
                                 GROUP BY ic.category_id;''', (category,)) 
+            return self.cur.fetchall()
 
     def change_tag(self): # optional
         """ 
