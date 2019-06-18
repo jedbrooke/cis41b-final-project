@@ -61,7 +61,6 @@ class SqlDb():
         headers = {'Authorization': 'Client-ID ' + self.CLIENT}
             url = 'https://api.imgur.com/3/gallery/search/top/all/{}?q={} ext: jpg NOT album'.format(page_no, category)
         response = requests.request('GET', url, headers = headers)
-        # r = requests.get("https://api.imgur.com/3/tags", headers={'Authorization': self.CLIENT})
         data = json.loads(response.text)
         data = data['data']
             
@@ -69,11 +68,10 @@ class SqlDb():
                 # Reject albums
                 if image['link'][-3:] != 'jpg':
                     continue
-                album_categories = [(i['name'],) for i in image['tags']] 
 
+                album_categories = [(i['name'],) for i in image['tags']] 
                     url = image['link']
                     page = requests.get(url)
-
                     metadata = {'url': url, 'nsfw': image['nsfw'], 'filetype': image['link'][-3:], 'sizetype': None, 'categories': album_categories, 'reject': 0}
                     
                 # Sometimes an album won't get tagged, but will show up in the title, force the category
@@ -179,9 +177,11 @@ class SqlDb():
         for i in gen:
             m = re.search(r"[\w]*\.[\w]*$", i[2])
             filename = i[2][m.start():m.end()] # This should be an RE
+
             with open(os.path.join(directory, category, filename), 'wb') as f:
                 f.write(i[1])
                 print('Saved image', filename)
+
         return True
 
     def create_db(self):
