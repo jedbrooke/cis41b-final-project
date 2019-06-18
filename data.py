@@ -242,22 +242,22 @@ class SqlDb():
 if __name__ == "__main__":
     db = SqlDb()
     category = 'dogs'
-    # gen = db.download_nimages_with_category(category, 30)
+    gen = db.download_nimages_with_category(category, 5)
 
     # for i in gen:
     #     print(i[2])
 
-    # print('Count of Tags related to category:')
-    # print(db.get_count_of_tags(category))
-    # print('All Categories:')
-    # print(db.get_categories())
-    # print('Categories and counts:')
-    # print(db.get_categories(count = True))
-    # print('Exporting images:')
-    # db.export_images(category)
+    print('Count of Tags related to category:')
+    print(db.get_count_of_tags(category))
+    print('All Categories:')
+    print(db.get_categories())
+    print('Categories and counts:')
+    print(db.get_categories(count = True))
+    print('Exporting images:')
+    db.export_images(category)
 
     category = 'cats'
-    # gen = db.download_nimages_with_category(category, 30)
+    gen = db.download_nimages_with_category(category, 5)
 
     # for i in gen:
     #     print(i[2])
