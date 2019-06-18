@@ -177,7 +177,7 @@ class SqlDb():
             os.makedirs(os.path.join(directory, category))
 
         for i in gen:
-            m = re.search("[\w]*\.[\w]*$", i[2])
+            m = re.search(r"[\w]*\.[\w]*$", i[2])
             filename = i[2][m.start():m.end()] # This should be an RE
             with open(os.path.join(directory, category, filename), 'wb') as f:
                 f.write(i[1])
