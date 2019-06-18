@@ -66,23 +66,18 @@ class SqlDb():
         data = data['data']
             
             for image in data:
-                # if 'images' in item.keys():
+                # Reject albums
                 if image['link'][-3:] != 'jpg':
                     continue
                 album_categories = [(i['name'],) for i in image['tags']] 
 
-                # for image in item['images']:
                     url = image['link']
                     page = requests.get(url)
-                    # with open('temp.jpg', 'wb') as f:
-                    #     f.write(page.content)
-                # if image['tags'] != []:
-                #     print('tag found in image and needs to be examined')
-                #     print(image['tags'])
 
                     metadata = {'url': url, 'nsfw': image['nsfw'], 'filetype': image['link'][-3:], 'sizetype': None, 'categories': album_categories, 'reject': 0}
                     
-                    if metadata['categories'] == []: # Sometimes an album won't get tagged, but will show up in the title, force the category
+                # Sometimes an album won't get tagged, but will show up in the title, force the category
+                if metadata['categories'] == []:
                         metadata['categories'] = [(category,)]
 
                     # Some images don't have the tag, but show up in the results because the word appears in the title
@@ -92,13 +87,10 @@ class SqlDb():
                     self.add_to_db(page.content, metadata)
                     i += 1
                     print('Downloaded', i, 'images of', n)
-                    if i > n: 
-                        break   
-                # else:
-                #     print('No key called `images` found')
-                #     print(item['link'])
+
             if i > n: 
                 break 
+            # Get the next page of images
             page_no += 1
         
         return self.get_images_from_category(category)
