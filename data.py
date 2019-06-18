@@ -73,7 +73,7 @@ class SqlDb():
                         print('tag found in image and needs to be examined')
                         print(image['tags'])
 
-                    metadata = {'url': url, 'nsfw': image['nsfw'], 'filetype': image['link'][-3:], 'sizetype': None, 'categories': album_categories}
+                    metadata = {'url': url, 'nsfw': image['nsfw'], 'filetype': image['link'][-3:], 'sizetype': None, 'categories': album_categories, 'reject': 0}
                     
                     if metadata['categories'] == []: # Sometimes an album won't get tagged, but will show up in the title, force the category
                         metadata['categories'] = [category]
