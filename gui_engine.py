@@ -103,10 +103,8 @@ class Button():
     def quit():
         print("press the red button to close the window")
 
-class Form(tk.Frame):
-    def __init__(self,parent=None,action=None):
-        super().__init__(parent)
-        self.action = action
+class Form():
+    def __init__(self,action=None):
         self.fields = []
 
     def add_field(self,field):
@@ -121,14 +119,10 @@ class Form(tk.Frame):
         sel.data.append(data)
 
     def submit(self):
-        try:
-            getattr(self,self.action)()
-        except Exception as e:
-            self.print_all_fields()
-            print(e)
+        self.print_all_fields()
 
     def print_all_fields(self):
-        print(self.fields)
+        print(*self.fields)
 
     #form submit functions
     def print_user_text(self):
@@ -154,10 +148,12 @@ class Field():
         self.ftype = ftype
         self.name = name
         self.data = data
+    def __str__(self):
+        return str([self.ftype,self.name,self.data])
 
 class Window():
     """docstring for Window"""
-    def __init__(self,soup=None,path=None,main=False,master=None):
+    def __init__(self,soup=None,path=None,main=False,master=None,form=None):
         self.HEAD_ACTIONS = {
             "title":self.set_title,
             "geometry":self.set_geometry
@@ -178,7 +174,7 @@ class Window():
 
         self.buttons = {}
         self.images = []
-        self.form = None
+        self.form = form
 
         if main:
             self.win = tk.Tk()
@@ -270,10 +266,12 @@ class Window():
 
 
     def create_form(self,form,parent):
-        self.form = Form(parent=parent,action=TagUtility.get_attribute(form,"action"))
-        elements = self.buildBody(form,self.form)
-        self.form.grid(TagUtility.get_grid_args(form))
-        return (self.form,elements)
+        if not self.form:
+            self.form = Form()
+        form_frame = tk.Frame(parent)
+        elements = self.buildBody(form,form_frame)
+        form_frame.grid(TagUtility.get_grid_args(form))
+        return (form_frame,elements)
 
 
     def create_listbox(self,listbox,parent,scrolling=False):
