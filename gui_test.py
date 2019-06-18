@@ -1,5 +1,13 @@
-from gui_engine import Form, Window, TagUtility
+from gui_engine import Form, Window, TagUtility, Button
 
+class TestButton(Button):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args,**kwargs)
+
+    @staticmethod
+    def print_hello():
+        print("hello")
+        
 class TestForm(Form):
     def __init__(self):
         super().__init__()
@@ -21,7 +29,8 @@ class TestForm(Form):
 
 def main():
     form = TestForm()
-    Window(TagUtility.get_html("gui_pages/testing.html"),main=True,form=form)
+    button = TestButton()
+    Window(TagUtility.get_html("gui_pages/testing.html"),main=True,form=form,button=button)
 
 if __name__ == '__main__':
     main()

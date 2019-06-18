@@ -1,7 +1,9 @@
 from bs4 import BeautifulSoup as bs
 import tkinter as tk
 from tkinter import Canvas
+from tkinter import messagebox as tkmb
 from PIL import ImageTk,Image
+import os
 
 """utility functions"""
 
@@ -96,19 +98,15 @@ class Button():
 
     #button actions
     @staticmethod
-    def print_hello():
-        print("hello")
-
-    @staticmethod
     def quit():
         print("press the red button to close the window")
 
 class Form():
     def __init__(self,action=None):
-        self.fields = []
+        self.fields = {}
 
     def add_field(self,field):
-        self.fields.append(field)
+        self.fields[field.name] = field
         if field.ftype == "for_label":
             var = [f for f in self.fields if f.name == field.data[0]][0]
             print(var.data)
@@ -118,14 +116,14 @@ class Form():
         sel = self.get_field(field_name)
         sel.data.append(data)
 
+    def get_field(self,name):
+        return self.fields[name]
+
     def submit(self):
         self.print_all_fields()
 
     def print_all_fields(self):
         print(*self.fields)
-
-    def get_field(self,name):
-        return [field for field in self.fields if field.name == name][0]
 
 class Field():
     def __init__(self, ftype, name, data):
@@ -137,7 +135,7 @@ class Field():
 
 class Window():
     """docstring for Window"""
-    def __init__(self,soup=None,path=None,main=False,master=None,form=None):
+    def __init__(self,soup=None,path=None,main=False,master=None,form=None,button=None):
         self.HEAD_ACTIONS = {
             "title":self.set_title,
             "geometry":self.set_geometry
@@ -157,6 +155,7 @@ class Window():
         }
 
         self.buttons = {}
+        self.button = button if button else Button
         self.images = []
         self.form = form
 
@@ -327,11 +326,15 @@ class Window():
         self.win.destroy()
 
     def link_clicked(self,button):
-        Window(TagUtility.get_html(f"gui_pages/{button.link}"),master=self.win)
+        path = f"gui_pages/{button.link}"
+        if os.path.isfile(path):
+            Window(TagUtility.get_html(path),master=self.win)
+        else :
+            tkmb.showerror(title="Page not Found", message=f"Error: \"{path}\" does not exist!")
 
     def button_action(self,button):
         try:
-            getattr(Button,button.action)()
+            getattr(self.button,button.action)()
         except Exception as e:
             print(e)
 
@@ -387,9 +390,6 @@ class Window():
             return b
         else :
             return (b,self.buildBody(option,parent))
-
-    def post(self,*args,**kwargs):
-        pass
        
 BUTTON_TYPE_ACTIONS = {
     "back":Window.back_button,
