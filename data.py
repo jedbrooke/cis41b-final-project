@@ -13,7 +13,7 @@ import re
 class SqlDb():
     DB_NAME = 'images.db'
     CLIENT = 'd46861ef7ecb2dc'
-    CLIENT_SECRET = '8889ad15753f373b14b2cfb74de86004837c7137'
+    CLIENT_SECRET = '8889ad15753f373b14b2cfb74de86004837c7137' # Shouldn't be here
     
     def __init__(self):
         """ 
@@ -26,9 +26,9 @@ class SqlDb():
             self.conn = sqlite3.connect(self.DB_NAME)
             self.cur = self.conn.cursor()
 
-    def add_to_db(self, image, metadata):
-        pass
+        # self. = https://api.imgur.com/oauth2/authorize?client_id=YOUR_CLIENT_ID&response_type=REQUESTED_RESPONSE_TYPE&state=APPLICATION_STATE
 
+        # Do other stuff
 
     def add_to_db(self, image, metadata):
         """ 
