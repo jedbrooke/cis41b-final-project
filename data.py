@@ -94,9 +94,9 @@ class SqlDb():
             if i > n: 
                 break 
             else:
+                print('No key called `images` found')
                 print(item['link'])
-            i += 1
-            if i > 5: break ## break
+        
         
         return self.get_images_from_category(category)
 
