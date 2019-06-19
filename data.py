@@ -71,7 +71,6 @@ class SqlDb():
 
                 album_categories = [(i['name'],) for i in image['tags']] 
                 url = image['link']
-                
                 page = requests.get(url)
                 metadata = {'url': url, 'nsfw': image['nsfw'], 'filetype': image['link'][-3:], 'sizetype': None, 'categories': album_categories, 'reject': 0}
                     
