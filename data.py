@@ -49,12 +49,15 @@ class SqlDb():
             print(str(e))
             return e
 
-    def download_nimages_with_category(self, category, n = 60, queue = None):
+    def download_nimages_with_category(self, category, n = 60, queue = None, filter_nsfw = True, blacklist = None):
         """ 
         Downloads the images to the db with multithreading
         If image does not have tag, assume the tag is not in the immage
         Returns a generator that returns the images with their data
         """
+        if not blacklist :
+            blacklist = []
+
         page_no = 0
         i = 1
         while i < n:
@@ -69,7 +72,16 @@ class SqlDb():
                 if image['link'][-3:] != 'jpg':
                     continue
 
+                if image['nsfw'] and filter_nsfw:
+                    print('Skipping NSFW Image')
+                    continue
+
                 album_categories = [(i['name'],) for i in image['tags']] 
+
+                if set(album_categories).intersection(set(blacklist)):
+                    print('Skipping image on blacklist')
+                    continue
+
                 url = image['link']
                 page = requests.get(url)
                 metadata = {'url': url, 'nsfw': image['nsfw'], 'filetype': image['link'][-3:], 'sizetype': None, 'categories': album_categories, 'reject': 0}
