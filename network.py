@@ -13,7 +13,6 @@ PORT = 5551
 class Server():
     def __init__(self, timeout = 60):
         with socket.socket() as s:
-            timeout = 20
             try:
                 # Listen for the clients
                 s.bind((HOST, PORT))
