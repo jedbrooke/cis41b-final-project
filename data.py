@@ -36,15 +36,15 @@ class SqlDb():
         image is an image binary
         """
         try:
-        	self.cur.execute('''INSERT INTO  Filetypes (filetype) VALUES (?) ''', (metadata['filetype'],))
-        	self.cur.executemany('''INSERT INTO  Categories (category) VALUES (?) ''', metadata['categories'])
-        	self.cur.execute('''INSERT INTO  Images (file, url, nsfw, sizetype) VALUES (?, ?, ?, ?); ''', (image, metadata['url'], metadata['nsfw'], metadata['sizetype']))
-        	img_id = self.cur.execute('''SELECT id FROM Images WHERE url = (?)''', (metadata['url'],)).fetchone()[0]
-        	sql_stmt = '''SELECT id FROM Categories WHERE category in ({})'''.format(','.join(['?']*len(metadata['categories'])))
-        	args = [i[0] for i in metadata['categories']]
-        	img_cat_list = [(img_id, i[0]) for i in self.cur.execute(sql_stmt, args).fetchall()]
-        	self.cur.executemany('''INSERT INTO  Image_Categories (img_id, category_id) VALUES (?, ?) ''', img_cat_list)
-        	self.conn.commit() ## Is there overhead for doing this a lot?
+            self.cur.execute('''INSERT INTO  Filetypes (filetype) VALUES (?) ''', (metadata['filetype'],))
+            self.cur.executemany('''INSERT INTO  Categories (category) VALUES (?) ''', metadata['categories'])
+            self.cur.execute('''INSERT INTO  Images (file, url, nsfw, sizetype) VALUES (?, ?, ?, ?); ''', (image, metadata['url'], metadata['nsfw'], metadata['sizetype']))
+            img_id = self.cur.execute('''SELECT id FROM Images WHERE url = (?)''', (metadata['url'],)).fetchone()[0]
+            sql_stmt = '''SELECT id FROM Categories WHERE category in ({})'''.format(','.join(['?']*len(metadata['categories'])))
+            args = [i[0] for i in metadata['categories']]
+            img_cat_list = [(img_id, i[0]) for i in self.cur.execute(sql_stmt, args).fetchall()]
+            self.cur.executemany('''INSERT INTO  Image_Categories (img_id, category_id) VALUES (?, ?) ''', img_cat_list)
+            self.conn.commit() ## Is there overhead for doing this a lot?
         except sqlite3.OperationalError as e:
             print(str(e))
             return e
@@ -58,11 +58,11 @@ class SqlDb():
         page_no = 1
         i = 1
         while i < n:
-        headers = {'Authorization': 'Client-ID ' + self.CLIENT}
+            headers = {'Authorization': 'Client-ID ' + self.CLIENT}
             url = 'https://api.imgur.com/3/gallery/search/top/all/{}?q={} ext: jpg NOT album'.format(page_no, category)
-        response = requests.request('GET', url, headers = headers)
-        data = json.loads(response.text)
-        data = data['data']
+            response = requests.request('GET', url, headers = headers)
+            data = json.loads(response.text)
+            data = data['data']
             
             for image in data:
                 # Reject albums
@@ -70,21 +70,20 @@ class SqlDb():
                     continue
 
                 album_categories = [(i['name'],) for i in image['tags']] 
-                    url = image['link']
-                    page = requests.get(url)
-                    metadata = {'url': url, 'nsfw': image['nsfw'], 'filetype': image['link'][-3:], 'sizetype': None, 'categories': album_categories, 'reject': 0}
+                url = image['link']
+                metadata = {'url': url, 'nsfw': image['nsfw'], 'filetype': image['link'][-3:], 'sizetype': None, 'categories': album_categories, 'reject': 0}
                     
                 # Sometimes an album won't get tagged, but will show up in the title, force the category
                 if metadata['categories'] == []:
-                        metadata['categories'] = [(category,)]
+                    metadata['categories'] = [(category,)]
 
-                    # Some images don't have the tag, but show up in the results because the word appears in the title
-                    if category not in metadata['categories']: 
-                        metadata['categories'].append((category,))
+                # Some images don't have the tag, but show up in the results because the word appears in the title
+                if category not in metadata['categories']: 
+                    metadata['categories'].append((category,))
 
-                    self.add_to_db(page.content, metadata)
-                    i += 1
-                    print('Downloaded', i, 'images of', n)
+                self.add_to_db(page.content, metadata)
+                i += 1
+                print('Downloaded', i, 'images of', n)
 
                 if i > n: 
                     break   
@@ -119,11 +118,11 @@ class SqlDb():
         Returns a list of tuples of tag and count
         """
         if category == None:
-        # Get list of all tags
-        self.cur.execute('''SELECT Categories.category, count(Image_Categories.category_id)
-                            FROM Image_Categories JOIN Categories ON Image_Categories.category_id = Categories.id 
-                            GROUP BY Image_Categories.category_id;''')
-        return self.cur.fetchall()
+            # Get list of all tags
+            self.cur.execute('''SELECT Categories.category, count(Image_Categories.category_id)
+                                FROM Image_Categories JOIN Categories ON Image_Categories.category_id = Categories.id 
+                                GROUP BY Image_Categories.category_id;''')
+            return self.cur.fetchall()
         else: # only get tags associated with some tag
             self.cur.execute('''SELECT c.category, count(ic.category_id) 
                                 FROM Images i JOIN Image_Categories ic ON i.id = ic.img_id JOIN Categories c ON ic.category_id = c.id 
@@ -148,7 +147,7 @@ class SqlDb():
                                 FROM Categories c JOIN Image_Categories ic ON c.id = ic.category_id 
                                 GROUP BY ic.category_id;''').fetchall()
         else: 
-        return self.cur.execute('SELECT category FROM Categories;').fetchall()
+            return self.cur.execute('SELECT category FROM Categories;').fetchall()
 
     def delete_images(self, img_urls):
         """ 
