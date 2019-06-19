@@ -1,3 +1,4 @@
 images.db
 .vscode/
 imgs/*
+__pycache__/
