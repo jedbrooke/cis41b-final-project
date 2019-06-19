@@ -55,7 +55,7 @@ class SqlDb():
         If image does not have tag, assume the tag is not in the immage
         Returns a generator that returns the images with their data
         """
-        page_no = 1
+        page_no = 0
         i = 1
         while i < n:
             headers = {'Authorization': 'Client-ID ' + self.CLIENT}
