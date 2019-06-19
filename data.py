@@ -23,7 +23,7 @@ class SqlDb():
             self.create_db()
             print('created new db')
         else:
-            self.conn = sqlite3.connect(self.DB_NAME)
+            self.conn = sqlite3.connect(self.DB_NAME) # pylint: disable=maybe-no-member
             self.cur = self.conn.cursor()
 
         # self. = https://api.imgur.com/oauth2/authorize?client_id=YOUR_CLIENT_ID&response_type=REQUESTED_RESPONSE_TYPE&state=APPLICATION_STATE
@@ -45,7 +45,7 @@ class SqlDb():
             img_cat_list = [(img_id, i[0]) for i in self.cur.execute(sql_stmt, args).fetchall()]
             self.cur.executemany('''INSERT INTO  Image_Categories (img_id, category_id) VALUES (?, ?) ''', img_cat_list)
             self.conn.commit() ## Is there overhead for doing this a lot?
-        except sqlite3.OperationalError as e:
+        except sqlite3.OperationalError as e: # pylint: disable=maybe-no-member
             print(str(e))
             return e
 
@@ -188,7 +188,7 @@ class SqlDb():
         return True
 
     def create_db(self):
-        self.conn = sqlite3.connect(self.DB_NAME)
+        self.conn = sqlite3.connect(self.DB_NAME) # pylint: disable=maybe-no-member
         self.cur = self.conn.cursor()   
 
         tables = ['Images', 'Image_Categories', 'Categories']
@@ -228,7 +228,7 @@ class SqlDb():
                         FOREIGN KEY (img_id) REFERENCES Images(id) ON DELETE CASCADE,
                         FOREIGN KEY (category_id) REFERENCES Categories(id)
                         );''')
-        except sqlite3.OperationalError as e:
+        except sqlite3.OperationalError as e: # pylint: disable=maybe-no-member
             print(str(e))
             raise SystemExit
         
