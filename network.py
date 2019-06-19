@@ -5,6 +5,7 @@ This server handles database checking and downloading of the large full sized fi
 
 import socket
 import serverdata
+import pickle
 
 HOST = 'localhost'
 PORT = 5551
@@ -20,12 +21,24 @@ class Server():
                 s.listen()
                 (conn, addr) = s.accept()
                 print(addr, 'connected.')
+                options = {'send_data': self.get_data_from_client, 
+                           'clear_db': self.clear_db,
+                           'check_if_trainable': self.check_db_for_training,
+                           'train': self.train_network}
+
+                while True:
+                    from_client = pickle.loads(conn.recv(1024))
+
+                    if from_client['type'] == 'q':
+                        break
+                    else:                        
+                        options[from_client['type']](from_client, conn)   
 
             except socket.timeout:
                 print('time out')
                 # break
 
-    def get_info_from_client(self, args):
+    def get_data_from_client(self, args):
     """  
     Gets the information of which files to download from client
     """
@@ -52,4 +65,3 @@ class Server():
 
 if __name__ == "__main__":
     s = Server()
-
