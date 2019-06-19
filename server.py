@@ -38,29 +38,29 @@ class Server():
                 # break
 
     def get_data_from_client(self, args):
-    """  
-    Gets the information of which files to download from client
-    """
-    pass
+        """  
+        Gets the information of which files to download from client
+        """
+        pass
 
     def clear_db(self, db):
-    """  
-    Resets the db
-    """
-    db.create_db()
+        """  
+        Resets the db
+        """
+        db.create_db()
 
     def check_db_for_training(self):
-    """  
-    Checks the db for sufficient data to start training
-    Suppose sufficient data is >= 2 categories and >= 10 images for testing purposes
-    """
-    pass
+        """  
+        Checks the db for sufficient data to start training
+        Suppose sufficient data is >= 2 categories and >= 10 images for testing purposes
+        """
+        pass
 
     def train_network(self):
-    """  
-    Check if sufficient data in the local db and then print message about training
-    """
-    pass
+        """  
+        Check if sufficient data in the local db and then print message about training
+        """
+        pass
 
 if __name__ == "__main__":
     s = Server()
