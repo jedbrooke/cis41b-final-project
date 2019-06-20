@@ -4,8 +4,7 @@ class TestButton(Button):
     def __init__(self, *args, **kwargs):
         super().__init__(*args,**kwargs)
 
-    @staticmethod
-    def print_hello():
+    def print_hello(self):
         print("hello")
         
 class TestForm(Form):
@@ -28,9 +27,7 @@ class TestForm(Form):
         label.data.set(text)
 
 def main():
-    form = TestForm()
-    button = TestButton()
-    Window(TagUtility.get_html("gui_pages/testing.html"),main=True,form=form,button=button)
+    Window(TagUtility.get_html("gui_pages/testing.html"),main=True,form=TestForm,button=TestButton)
 
 if __name__ == '__main__':
     main()
