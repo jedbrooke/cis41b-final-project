@@ -7,14 +7,14 @@ import sys
 import os
 import requests
 import json
-from PIL import ImageTk, Image 
+from PIL import ImageTk, Image
 import re 
 
 class SqlDb():
     DB_NAME = 'images.db'
     CLIENT = 'd46861ef7ecb2dc'
     CLIENT_SECRET = '8889ad15753f373b14b2cfb74de86004837c7137' # Shouldn't be here
-    
+
     def __init__(self):
         """ 
         Set up db if none is found
@@ -23,7 +23,7 @@ class SqlDb():
             self.create_db()
             print('created new db')
         else:
-            self.conn = sqlite3.connect(self.DB_NAME)
+            self.conn = sqlite3.connect(self.DB_NAME) # pylint: disable=maybe-no-member
             self.cur = self.conn.cursor()
 
         # self. = https://api.imgur.com/oauth2/authorize?client_id=YOUR_CLIENT_ID&response_type=REQUESTED_RESPONSE_TYPE&state=APPLICATION_STATE
@@ -45,17 +45,21 @@ class SqlDb():
             img_cat_list = [(img_id, i[0]) for i in self.cur.execute(sql_stmt, args).fetchall()]
             self.cur.executemany('''INSERT INTO  Image_Categories (img_id, category_id) VALUES (?, ?) ''', img_cat_list)
             self.conn.commit() ## Is there overhead for doing this a lot?
-        except sqlite3.OperationalError as e:
+
+        except sqlite3.OperationalError as e: # pylint: disable=maybe-no-member
             print(str(e))
             return e
 
-    def download_nimages_with_category(self, category, n = 60, queue = None):
+    def download_nimages_with_category(self, category, n = 60, queue = None, filter_nsfw = True, blacklist = None):
         """ 
         Downloads the images to the db with multithreading
         If image does not have tag, assume the tag is not in the immage
         Returns a generator that returns the images with their data
         """
-        page_no = 1
+        if not blacklist :
+            blacklist = []
+
+        page_no = 0
         i = 1
         while i < n:
             headers = {'Authorization': 'Client-ID ' + self.CLIENT}
@@ -69,15 +73,27 @@ class SqlDb():
                 if image['link'][-3:] != 'jpg':
                     continue
 
+                if image['nsfw'] and filter_nsfw:
+                    print('Skipping NSFW Image')
+                    continue
+
                 album_categories = [(i['name'],) for i in image['tags']] 
+                # Sometimes an album won't get tagged, but will show up in the title, force the category
+                if not album_categories:
+                    album_categories = [(category,)]
+
+                if set([i['name'] for i in image['tags']]).intersection(set(blacklist)):
+                    print('Skipping image on blacklist')
+                    continue
+
                 url = image['link']
                 page = requests.get(url)
                 metadata = {'url': url, 'nsfw': image['nsfw'], 'filetype': image['link'][-3:], 'sizetype': None, 'categories': album_categories, 'reject': 0}
-                    
-                # Sometimes an album won't get tagged, but will show up in the title, force the category
-                if metadata['categories'] == []:
-                    metadata['categories'] = [(category,)]
-
+                
+                # # Sometimes an album won't get tagged, but will show up in the title, force the category
+                # if metadata['categories'] == []:
+                #     metadata['categories'] = [(category,)]
+                
                 # Some images don't have the tag, but show up in the results because the word appears in the title
                 if category not in metadata['categories']: 
                     metadata['categories'].append((category,))
@@ -138,7 +154,7 @@ class SqlDb():
         Change tag of images 
         """
         pass
-
+    
     def get_categories(self, count = False):
         """ 
         Returns a list of all the categories on the db (also count of each category)
@@ -188,8 +204,8 @@ class SqlDb():
         return True
 
     def create_db(self):
-        self.conn = sqlite3.connect(self.DB_NAME)
-        self.cur = self.conn.cursor()
+        self.conn = sqlite3.connect(self.DB_NAME) # pylint: disable=maybe-no-member
+        self.cur = self.conn.cursor()   
 
         tables = ['Images', 'Image_Categories', 'Categories']
 
@@ -228,7 +244,7 @@ class SqlDb():
                         FOREIGN KEY (img_id) REFERENCES Images(id) ON DELETE CASCADE,
                         FOREIGN KEY (category_id) REFERENCES Categories(id)
                         );''')
-        except sqlite3.OperationalError as e:
+        except sqlite3.OperationalError as e: # pylint: disable=maybe-no-member
             print(str(e))
             raise SystemExit
         
@@ -241,7 +257,7 @@ class SqlDb():
 if __name__ == "__main__":
     db = SqlDb()
     category = 'dogs'
-    gen = db.download_nimages_with_category(category, 100)
+    gen = db.download_nimages_with_category(category, 10, filter_nsfw=True, blacklist=['aww'])
 
     # for i in gen:
     #     print(i[2])
@@ -256,11 +272,11 @@ if __name__ == "__main__":
     db.export_images(category)
 
     category = 'cats'
-    gen = db.download_nimages_with_category(category, 100)
+    gen = db.download_nimages_with_category(category, 10, blacklist= ['dogs', 'aww'])
 
     # for i in gen:
     #     print(i[2])
-
+    
     print('Count of Tags related to category:')
     print(db.get_count_of_tags(category))
     print('All Categories:')

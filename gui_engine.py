@@ -4,6 +4,7 @@ from tkinter import Canvas
 from tkinter import messagebox as tkmb
 from PIL import ImageTk,Image
 import os
+from io import BytesIO
 
 """utility functions"""
 
@@ -28,10 +29,16 @@ class TagUtility():
         "title":str
     }
 
+    FRAME_ARGS = {
+        "height":int,
+        "width":int,
+    }
+
     ELEMENT_ARGS = {
         "grid":GRID_ARGS,
         "listbox":LISTBOX_ARGS,
         "button":BUTTON_ARGS,
+        "frame":FRAME_ARGS,
     }
 
     def __init__(self):
@@ -76,8 +83,15 @@ class TagUtility():
         return TagUtility.get_element_args(tag,"button")
 
     @staticmethod
-    def get_image(src,target_size=250):
-        img_pil = Image.open(src)
+    def get_frame_args(tag):
+        return TagUtility.get_element_args(tag,"frame")
+
+    @staticmethod
+    def get_image(src,target_size=250,mode='path'):
+        if mode == "path": 
+            img_pil = Image.open(src)
+        elif mode == 'blob':
+            img_pil = Image.open(BytesIO(src))
         width,height = img_pil.size
         ratio = width/height
         width_new = target_size
@@ -86,11 +100,12 @@ class TagUtility():
         return ImageTk.PhotoImage(img_pil)
 
 class Button():
-    def __init__(self, link=None, action=None, btype=None, title=None):
+    def __init__(self, link=None, action=None, btype=None, title=None, window=None):
         self.link = link
         self.action = action
         self.btype = btype
         self.title = title
+        self.window = window
         if link and not btype:
             self.btype = "link"
         elif action and not btype:
@@ -102,14 +117,14 @@ class Button():
         print("press the red button to close the window")
 
 class Form():
-    def __init__(self,action=None):
+    def __init__(self,action=None,window=None):
         self.fields = {}
+        self.window = window
 
     def add_field(self,field):
         self.fields[field.name] = field
         if field.ftype == "for_label":
             var = [f for f in self.fields if f.name == field.data[0]][0]
-            print(var.data)
             field.data[1]["textvariable"] = var.data
 
     def add_to_multiple_select(self,field_name,data):
@@ -118,9 +133,6 @@ class Form():
 
     def get_field(self,name):
         return self.fields[name]
-
-    def submit(self):
-        self.print_all_fields()
 
     def print_all_fields(self):
         print(*self.fields)
@@ -135,7 +147,8 @@ class Field():
 
 class Window():
     """docstring for Window"""
-    def __init__(self,soup=None,path=None,main=False,master=None,form=None,button=None):
+    client = None
+    def __init__(self,soup=None,path=None,main=False,master=None,form=None,button=None,windows=None):
         self.HEAD_ACTIONS = {
             "title":self.set_title,
             "geometry":self.set_geometry
@@ -145,7 +158,7 @@ class Window():
             "button":self.create_button,
             "label":self.create_label,
             "div":self.create_frame,
-            "scrollbox":lambda *args, **kwargs: self.create_scrollbox(scrolling=True,*args,**kwargs),
+            "scrollbox":lambda *args, **kwargs: self.create_listbox(scrolling=True,*args,**kwargs),
             "listbox":self.create_listbox,
             "img":self.create_image,
             "form":self.create_form,
@@ -157,11 +170,16 @@ class Window():
         self.buttons = {}
         self.button = button if button else Button
         self.images = []
-        self.form = form
+        self.form_type = form if form else Form
         self.frames = {}
+        self.windows = windows
+        self.isMain = main
+        self.master = master
+
 
         if main:
             self.win = tk.Tk()
+            self.win.protocol("WM_DELETE_WINDOW", self.shut_down)
         else:
             self.win = tk.Toplevel()
             self.win.transient(master=master)
@@ -174,12 +192,27 @@ class Window():
         elif soup is not None and path is None:
             self.soup = soup
 
+        if main:
+            self._initialize()
+
+    def start(self):
+        self.win.mainloop()
+        print("mainloop over")
+
+    def _initialize(self):
+        self.form = self.form_type(window=self)
         self.buildElements()
         self.main_frame.grid()
-        self.win.mainloop()
 
     def _initPath(self,path):
-            self.soup = TagUtility.get_html(path)   
+            self.soup = TagUtility.get_html(path)
+
+    def shut_down(self):
+        print("quitting in window")
+        self.win.quit()
+
+    def post(self):
+           self._initialize()   
 
     def buildElements(self):
         self.buildHead(self.soup.head)
@@ -226,16 +259,13 @@ class Window():
 
     def create_button(self,button,parent):
         if len(button.find_all("img")) != 0:
-            print("setting button icon")
-            print(button.find_all("img")[0]["src"])
             icon = TagUtility.get_image(src=button.find_all("img")[0]["src"],target_size=20)
             b = tk.Button(parent,image=icon,text=button.text.strip(),height=20,width=20)
-            self.images.append(icon
-                )
+            self.images.append(icon)
         else: 
             b = tk.Button(parent,text=button.text.strip())
         b.grid(TagUtility.get_grid_args(button))
-        self.buttons[str(b)] = Button(**TagUtility.get_button_args(button))
+        self.buttons[str(b)] = self.button(**TagUtility.get_button_args(button),window=self)
         b.bind("<Button-1>",self.button_clicked)
         return b
 
@@ -255,8 +285,6 @@ class Window():
 
 
     def create_form(self,form,parent):
-        if not self.form:
-            self.form = Form()
         form_frame = tk.Frame(parent)
         elements = self.buildBody(form,form_frame)
         form_frame.grid(TagUtility.get_grid_args(form))
@@ -276,6 +304,11 @@ class Window():
 
         tk_listbox = tk.Listbox(parent,**TagUtility.get_listbox_args(listbox))
         list_items = self.buildList(listbox,tk_listbox)
+
+        list_id = TagUtility.get_attribute(listbox,"id")
+        if not list_id:
+            list_id = str(tk_listbox)
+        self.frames[list_id] = tk_listbox
 
         if self.form:
             name = TagUtility.get_attribute(listbox,"name")
@@ -307,12 +340,17 @@ class Window():
         canvas.grid(row=0,column=0,sticky=tk.W)
         canvas.create_window((0,0),window=inner_frame,anchor='nw')
 
-        canvas.bind("<Configure>",lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+
+        canvas.bind("<Configure>",lambda e: canvas.configure(scrollregion=canvas.bbox("all"),**TagUtility.get_frame_args(scrollframe)))
 
         frame_id = TagUtility.get_attribute(scrollframe,"id")
         if not frame_id:
             frame_id = str(inner_frame)
         self.frames[frame_id] = inner_frame
+        outer_frame_id = "outer-"+frame_id
+        self.frames[outer_frame_id] = outer_frame
+        canvas_id = frame_id+"-canvas"
+        self.frames[canvas_id] = canvas
 
         return (outer_frame,self.buildBody(scrollframe,inner_frame,*args,**kwargs))
 
@@ -338,18 +376,32 @@ class Window():
         
 
     def back_button(self,button):
+        self.master.grab_set()
+        self.master.focus_set()
         self.win.destroy()
 
     def link_clicked(self,button):
-        path = f"gui_pages/{button.link}"
+        self.goto_link(button.link)
+
+    def goto_link(self,link,destroy=False,*args,**kwargs):
+        path = f"gui_pages/{link}"
+        print("link clicked:",link)
         if os.path.isfile(path):
-            Window(TagUtility.get_html(path),master=self.win)
+            try:
+                window = self.windows[link]
+            except Exception as e:
+                window = Window
+            w = window(TagUtility.get_html(path),master=self.win)
+            w.post(*args,**kwargs)
+
         else :
             tkmb.showerror(title="Page not Found", message=f"Error: \"{path}\" does not exist!")
+        if destroy:
+            self.win.destroy()
 
     def button_action(self,button):
         try:
-            getattr(self.button,button.action)()
+            getattr(button,button.action)()
         except Exception as e:
             print(e)
 
@@ -408,6 +460,13 @@ class Window():
 
     def get_frame_by_id(self,_id):
         return self.frames[_id]
+
+    def post(self):
+        self._initialize()
+
+    @staticmethod
+    def set_client(_client):
+        Window.client = _client
        
 BUTTON_TYPE_ACTIONS = {
     "back":Window.back_button,
