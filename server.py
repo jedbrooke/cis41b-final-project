@@ -47,13 +47,16 @@ class Server():
         Gets the information of which files to download from client
         """
         print('Getting data from client')
-        # urls = args['data'][0]
-        # tags = args['data'][1]
+        argss = {}
+        argss['data'] = [['https://i.imgur.com/zQrpML1.jpg'],
+                        ['dogs']]
+        urls = argss['data'][0]
+        tags = argss['data'][1]
 
         # download and add urls and tags to DB
         print('downloading to db')
-        # for url, tag in zip(urls, tags):
-        #     self.db.add_to_db(url, tag)        
+        for url, tag in zip(urls, tags):
+            self.db.add_to_db(url, tag)        
 
     def clear_db(self, *args):
         """  
@@ -90,7 +93,10 @@ class Server():
         """  
         Check if sufficient data in the local db and then print message about training
         """
-        print('Training in progress. Please come back in a few hours.')
+        if self.check_db_for_training():
+            print('Training in progress. Please come back in a few hours.')
+        else:
+            print('Not enough data available. Please run db check.')
 
 if __name__ == "__main__":
     s = Server()
