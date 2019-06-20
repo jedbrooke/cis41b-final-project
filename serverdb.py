@@ -11,7 +11,7 @@ from PIL import ImageTk, Image
 import re 
 
 class SqlDb():
-    DB_NAME = 'images.db'
+    DB_NAME = 'serverimages.db'
     CLIENT = 'd46861ef7ecb2dc'
     CLIENT_SECRET = '8889ad15753f373b14b2cfb74de86004837c7137' # Shouldn't be here
 
@@ -210,7 +210,7 @@ class SqlDb():
         self.conn = sqlite3.connect(self.DB_NAME) # pylint: disable=maybe-no-member
         self.cur = self.conn.cursor()   
 
-        tables = ['Images', 'Image_Categories', 'Categories']
+        tables = ['Images', 'Image_Categories', 'Categories', 'Filetypes']
 
         for table in tables:
             # self.cur.execute('DROP TABLE IF EXISTS ?', (table,)) # Why does this not work?
