@@ -41,7 +41,8 @@ class Server():
                 print('time out')
                 # break
 
-    def get_data_from_client(self, args):
+
+    def get_data_from_client(self, *args):
         """  
         Gets the information of which files to download from client
         """
@@ -52,17 +53,17 @@ class Server():
         # download and add urls and tags to DB
         print('downloading to db')
         for url, tag in zip(urls, tags):
-            self.db.add_to_db(url, tag)
+            self.db.add_to_db(url, tag)        
 
-        
-
-    def clear_db(self):
+    def clear_db(self, *args):
         """  
         Resets the db
         """
+        print('Restting db.')
         self.db.create_db()
+        print('DB reset successful.')
 
-    def check_db_for_training(self):
+    def check_db_for_training(self, *args):
         """  
         Checks the db for sufficient data to start training
         Suppose sufficient data is >= 2 categories and >= 10 images for testing purposes
@@ -83,7 +84,7 @@ class Server():
 
         return ready
 
-    def train_network(self):
+    def train_network(self, *args):
         """  
         Check if sufficient data in the local db and then print message about training
         """
