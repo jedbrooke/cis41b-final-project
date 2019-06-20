@@ -47,13 +47,13 @@ class Server():
         Gets the information of which files to download from client
         """
         print('Getting data from client')
-        urls = args['data'][0]
-        tags = args['data'][1]
+        # urls = args['data'][0]
+        # tags = args['data'][1]
 
         # download and add urls and tags to DB
         print('downloading to db')
-        for url, tag in zip(urls, tags):
-            self.db.add_to_db(url, tag)        
+        # for url, tag in zip(urls, tags):
+        #     self.db.add_to_db(url, tag)        
 
     def clear_db(self, *args):
         """  
@@ -68,8 +68,10 @@ class Server():
         Checks the db for sufficient data to start training
         Suppose sufficient data is >= 2 categories and >= 10 images for testing purposes
         """
-        n_categories = self.db.cur.execute('''SELECT COUNT(c.id) FROM categories c;''').fetchone()
-        n_images = self.db.cur.execute('SELECT COUNT(i.id) FROM Images i;').fetchone()
+        n_categories = 0
+        n_images = 0
+        # n_categories = self.db.cur.execute('''SELECT COUNT(c.id) FROM categories c;''').fetchone()
+        # n_images = self.db.cur.execute('SELECT COUNT(i.id) FROM Images i;').fetchone()
         
         ready = False
         if n_categories < 2 and n_images < 10:
