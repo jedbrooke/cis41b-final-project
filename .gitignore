@@ -2,3 +2,5 @@ images.db
 .vscode/
 imgs/*
 __pycache__/
+gui_pages/.DS_Store
+.DS_Store
