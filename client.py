@@ -213,8 +213,8 @@ class PlotWindow(Window):
         data = Window.client.data_queue.get()
         data.sort(key=lambda val: val[1])
         frame = self.get_frame_by_id("plot")
-        tags = [d[0] for d in data][:15]
-        counts = [d[1] for d in data][:15]
+        tags = [d[0] for d in data][-15:]
+        counts = [d[1] for d in data][-15:]
         fig = plt.figure(figsize=(12,8))
         plt.barh(tags,counts,align="center")
         plt.yticks(wrap=True, fontsize=10, verticalalignment="center")
