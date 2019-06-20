@@ -305,6 +305,11 @@ class Window():
         tk_listbox = tk.Listbox(parent,**TagUtility.get_listbox_args(listbox))
         list_items = self.buildList(listbox,tk_listbox)
 
+        list_id = TagUtility.get_attribute(listbox,"id")
+        if not list_id:
+            list_id = str(tk_listbox)
+        self.frames[frame_id] = tk_listbox
+
         if self.form:
             name = TagUtility.get_attribute(listbox,"name")
             self.form.add_field(Field("listbox",name,[tk_listbox,list_items]))
