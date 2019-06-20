@@ -140,6 +140,8 @@ class ResultsWindow(Window):
                 for i in range(settings['n']):
                     Window.client.add_instruction("get_image_from_generator",None)
                     try:
+                        #img = dq.get
+                        #if not image: break
                         self.image_data.append([Window.client.data_queue.get(),False])
                     except queue.Empty as e:
                         print("timed out")
@@ -333,7 +335,7 @@ class Client():
         try:
             self.data_queue.put(next(self.images))
         except Exception as e:
-            pass
+            self.data_queue.put(False)
         
         
 
