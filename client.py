@@ -5,6 +5,7 @@ import queue
 import time
 import data
 import tkinter as tk
+import tkinter.filedialog as tkfd
 import pickle
 import matplotlib as mpl
 mpl.use('TkAgg') # tell matplotlib to work with Tkinter
@@ -28,6 +29,12 @@ class ResultsButton(Button):
         
     def graph_results(self):
         self.window.goto_link("graph_tags.html",category=self.window.category)
+
+    def export_category(self):
+        path = tkfd.askdirectory(parent=self.window.win)
+        if path:
+            Window.client.add_instruction("request_export",self.window.category,path)
+
 
 class SearchForm(Form):
     """docstring for Form"""
@@ -110,7 +117,7 @@ class ResultsWindow(Window):
             self.button = ResultsButton
             self.form_type = ResultsForm
             self.category = category
-            
+
         t = threading.Thread(target=self.get_images, args=(category,settings))
         t.start()
         
@@ -121,7 +128,7 @@ class ResultsWindow(Window):
             for i in range(settings['n']):
                 Window.client.add_instruction("get_image_from_generator",None)
                 try:
-                    self.image_data.append([Window.client.data_queue.get(timeout=20),False])
+                    self.image_data.append([Window.client.data_queue.get(timeout=30),False])
                 except queue.Empty as e:
                     print("timed out")
                     print(e)
@@ -208,6 +215,7 @@ class Client():
             "send_query_to_db":self.send_query_to_db,
             "get_image_from_generator":self.get_image_from_generator,
             "get_categories":self.get_categories,
+            "request_export":self.request_export,
         }
         self.instructions_queue = queue.Queue()
         self.instructions_queue.put(("initialize_db",(None,)))
@@ -244,8 +252,8 @@ class Client():
         #pass images ot gui
         pass
 
-    def request_export(self,category):
-        #self.db.export_images(category,directory)
+    def request_export(self,category,directory):
+        self.db.export_images(category,directory)
         pass
 
 
