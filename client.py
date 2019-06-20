@@ -63,7 +63,8 @@ class ResultsForm(Form):
 
 
     def submit(self):
-        #send urls to database
+        urls = [image[0][2] for image in self.window.image_data if image[1]]
+        Window.client.add_instruction("send_reject_urls_to_db",urls)
         self.window.post()
 
 class SettingsForm(Form):
@@ -128,7 +129,7 @@ class ResultsWindow(Window):
             for i in range(settings['n']):
                 Window.client.add_instruction("get_image_from_generator",None)
                 try:
-                    self.image_data.append([Window.client.data_queue.get(timeout=30),False])
+                    self.image_data.append([Window.client.data_queue.get(),False])
                 except queue.Empty as e:
                     print("timed out")
                     print(e)
@@ -190,10 +191,8 @@ class PlotWindow(Window):
         data = Window.client.data_queue.get()
         data.sort(key=lambda val: val[1])
         frame = self.get_frame_by_id("plot")
-        tags = [d[0] for d in data]
-        counts = [d[1] for d in data]
-        print(tags)
-        print(counts)
+        tags = [d[0] for d in data][:15]
+        counts = [d[1] for d in data][:15]
         fig = plt.figure(figsize=(12,8))
         plt.barh(tags,counts,align="center")
         plt.yticks(wrap=True, fontsize=10, verticalalignment="center")
@@ -216,6 +215,7 @@ class Client():
             "get_image_from_generator":self.get_image_from_generator,
             "get_categories":self.get_categories,
             "request_export":self.request_export,
+            "send_reject_urls_to_db":self.send_reject_urls_to_db,
         }
         self.instructions_queue = queue.Queue()
         self.instructions_queue.put(("initialize_db",(None,)))
@@ -251,6 +251,9 @@ class Client():
         #images is a list/generator of the image blobs
         #pass images ot gui
         pass
+
+    def send_reject_urls_to_db(self,urls):
+        self.db.reject_images(urls)
 
     def request_export(self,category,directory):
         self.db.export_images(category,directory)
