@@ -45,13 +45,15 @@ class SqlDb():
 
             # Add image to db
             # self.cur.execute('''INSERT INTO  Filetypes (filetype) VALUES (?) ''', (metadata['filetype'],))
-            self.cur.executemany('''INSERT INTO  Categories (category) VALUES (?) ''', metadata['categories'])
+            self.cur.execute('''INSERT INTO  Categories (category) VALUES (?) ''', (metadata['categories'],))
             self.cur.execute('''INSERT INTO  Images (file, url, nsfw, sizetype) VALUES (?, ?, ?, ?); ''', (image, metadata['url'], metadata['nsfw'], metadata['sizetype']))
             img_id = self.cur.execute('''SELECT id FROM Images WHERE url = (?)''', (metadata['url'],)).fetchone()[0]
-            sql_stmt = '''SELECT id FROM Categories WHERE category in ({})'''.format(','.join(['?']*len(metadata['categories'])))
-            args = [i[0] for i in metadata['categories']]
-            img_cat_list = [(img_id, i[0]) for i in self.cur.execute(sql_stmt, args).fetchall()]
-            self.cur.executemany('''INSERT INTO  Image_Categories (img_id, category_id) VALUES (?, ?) ''', img_cat_list)
+            sql_stmt = '''SELECT id FROM Categories WHERE category = ?'''
+            # args = [i[0] for i in metadata['categories']]
+
+            img_cat_tuple = (img_id, self.cur.execute(sql_stmt, (metadata['categories'],)).fetchone()[0])
+            # img_cat_list = (img_id, i[0]) for i in self.cur.execute(sql_stmt, metadata['categories']).fetch()
+            self.cur.execute('''INSERT INTO  Image_Categories (img_id, category_id) VALUES (?, ?) ''', img_cat_tuple)
             self.conn.commit() ## Is there overhead for doing this a lot?
             print('added image to db')
 
