@@ -78,7 +78,11 @@ class SqlDb():
 
                 album_categories = [(i['name'],) for i in image['tags']] 
 
-                if set(album_categories).intersection(set(blacklist)):
+                # Sometimes an album won't get tagged, but will show up in the title, force the category
+                if not album_categories:
+                    album_categories = [(category,)]
+
+                if set([i['name'] for i in image['tags']]).intersection(set(blacklist)):
                     print('Skipping image on blacklist')
                     continue
 
@@ -86,9 +90,9 @@ class SqlDb():
                 page = requests.get(url)
                 metadata = {'url': url, 'nsfw': image['nsfw'], 'filetype': image['link'][-3:], 'sizetype': None, 'categories': album_categories, 'reject': 0}
                 
-                # Sometimes an album won't get tagged, but will show up in the title, force the category
-                if metadata['categories'] == []:
-                    metadata['categories'] = [(category,)]
+                # # Sometimes an album won't get tagged, but will show up in the title, force the category
+                # if metadata['categories'] == []:
+                #     metadata['categories'] = [(category,)]
                 
                 # Some images don't have the tag, but show up in the results because the word appears in the title
                 if category not in metadata['categories']: 
@@ -253,7 +257,7 @@ class SqlDb():
 if __name__ == "__main__":
     db = SqlDb()
     category = 'dogs'
-    gen = db.download_nimages_with_category(category, 100)
+    gen = db.download_nimages_with_category(category, 10, filter_nsfw=True, blacklist=['aww'])
 
     # for i in gen:
     #     print(i[2])
@@ -268,7 +272,7 @@ if __name__ == "__main__":
     db.export_images(category)
 
     category = 'cats'
-    gen = db.download_nimages_with_category(category, 100)
+    gen = db.download_nimages_with_category(category, 10, blacklist= ['dogs', 'aww'])
 
     # for i in gen:
     #     print(i[2])
