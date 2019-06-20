@@ -4,3 +4,4 @@ images.db
 .vscode/
 imgs/*
 __pycache__/
+__pycache__/gui_engine.cpython-37.pyc
