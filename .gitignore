@@ -3,4 +3,4 @@ __pycache__/*
 images.db
 .vscode/
 imgs/*
-
+__pycache__/
