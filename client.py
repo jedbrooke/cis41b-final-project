@@ -137,7 +137,7 @@ class ResultsWindow(Window):
             self.image_data = []
             timed_out = False
             if settings:
-                for i in range():
+                for i in range(settings['n']):
                     Window.client.add_instruction("get_image_from_generator",None)
                     try:
                         self.image_data.append([Window.client.data_queue.get(),False])
