@@ -308,7 +308,7 @@ class Window():
         list_id = TagUtility.get_attribute(listbox,"id")
         if not list_id:
             list_id = str(tk_listbox)
-        self.frames[frame_id] = tk_listbox
+        self.frames[list_id] = tk_listbox
 
         if self.form:
             name = TagUtility.get_attribute(listbox,"name")
@@ -383,7 +383,7 @@ class Window():
     def link_clicked(self,button):
         self.goto_link(button.link)
 
-    def goto_link(self,link,*args,**kwargs):
+    def goto_link(self,link,destroy=False,*args,**kwargs):
         path = f"gui_pages/{link}"
         print("link clicked:",link)
         if os.path.isfile(path):
@@ -396,6 +396,8 @@ class Window():
 
         else :
             tkmb.showerror(title="Page not Found", message=f"Error: \"{path}\" does not exist!")
+        if destroy:
+            self.win.destroy()
 
     def button_action(self,button):
         try:

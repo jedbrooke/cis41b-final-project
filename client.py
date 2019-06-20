@@ -1,5 +1,5 @@
 import socket
-from gui_engine import Form, Window, TagUtility, Button
+from gui_engine import Form, Window, TagUtility, Button, Field
 import threading
 import queue
 import time
@@ -35,7 +35,6 @@ class ResultsButton(Button):
         if path:
             Window.client.add_instruction("request_export",self.window.category,path)
 
-
 class SearchForm(Form):
     """docstring for Form"""
     def __init__(self,*args,**kwargs):
@@ -55,7 +54,6 @@ class SearchForm(Form):
             print("invalid number, using default")
         print(settings)
         self.window.goto_link("results.html",category=category,settings=settings)
-
 
 class ResultsForm(Form):
     def __init__(self,*args,**kwargs):
@@ -81,7 +79,6 @@ class SettingsForm(Form):
         Window.client.data_queue.put(settings)
         self.window.win.destroy()
         
-
 class SettingsWindow(Window):
     def __init__(self, *args, **kwargs):
         super().__init__(*args,**kwargs)
@@ -90,6 +87,16 @@ class SettingsWindow(Window):
         print("calling settings window post")
         self.form_type = SettingsForm
         self._initialize()
+
+class ReviewForm(Form):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args,**kwargs)
+
+    def submit(self):
+        category = self.window.categories[self.get_field("categories-list").data[0].curselection()[0]][0]
+        print("submit category:",category)
+        self.window.goto_link("results.html",category=category)
+        
               
 class SearchWindow(Window):
     def __init__(self, *args, **kwargs):
@@ -114,7 +121,10 @@ class ResultsWindow(Window):
 
     def post(self,category=None,settings=None):
         if category:
-            Window.client.add_instruction("send_query_to_db",category,settings)
+            if settings:
+                Window.client.add_instruction("send_query_to_db",category,settings)
+            else:
+                Window.client.add_instruction("get_images_from_category",category)
             self.button = ResultsButton
             self.form_type = ResultsForm
             self.category = category
@@ -126,17 +136,29 @@ class ResultsWindow(Window):
         if category:
             self.image_data = []
             timed_out = False
-            for i in range(settings['n']):
-                Window.client.add_instruction("get_image_from_generator",None)
-                try:
-                    self.image_data.append([Window.client.data_queue.get(),False])
-                except queue.Empty as e:
-                    print("timed out")
-                    print(e)
-                    timed_out = True
-                    break
+            if settings:
+                for i in range():
+                    Window.client.add_instruction("get_image_from_generator",None)
+                    try:
+                        self.image_data.append([Window.client.data_queue.get(),False])
+                    except queue.Empty as e:
+                        print("timed out")
+                        print(e)
+                        timed_out = True
+                        break
+            else:
+                while True:
+                    Window.client.add_instruction("get_image_from_generator",None)
+                    try:
+                        self.image_data.append([Window.client.data_queue.get(timeout=2),False])
+                    except queue.Empty as e:
+                        print("timed out")
+                        print(e)
+                        timed_out = True
+                        break
 
             initialize = True
+
 
 
         else:
@@ -168,17 +190,17 @@ class ResultsWindow(Window):
             canvas.bind("<Button-1>",self.image_selected)
             self.images.append(img)
             self.display_images.append(canvas)
-            self.boxes[str(canvas)] = i
+            self.boxes[str(canvas)] = (i,grid_count)
             grid_count += 1
 
         frame.update()
 
     def image_selected(self,event):
-        index = self.boxes[str(event.widget)]
-        self.image_data[index][1] = True #set the remove flag to true
-        self.display_images[index].create_line(0,0,50,50,fill="red",width=5)
-        self.display_images[index].create_line(50,0,0,50,fill="red",width=5)
-        self.display_images[index].update()
+        img_index,grid_index = self.boxes[str(event.widget)]
+        self.image_data[img_index][1] = True #set the remove flag to true
+        self.display_images[grid_index].create_line(0,0,50,50,fill="red",width=5)
+        self.display_images[grid_index].create_line(50,0,0,50,fill="red",width=5)
+        self.display_images[grid_index].update()
 
 class PlotWindow(Window):
     def __init__(self, *args, **kwargs):
@@ -187,7 +209,7 @@ class PlotWindow(Window):
     def post(self,category):
         self._initialize()
         print("post in PlotWindow")
-        Window.client.add_instruction("get_categories",category)
+        Window.client.add_instruction("get_tag_counts",category)
         data = Window.client.data_queue.get()
         data.sort(key=lambda val: val[1])
         frame = self.get_frame_by_id("plot")
@@ -203,6 +225,24 @@ class PlotWindow(Window):
         canvas.get_tk_widget().grid()
         canvas.draw()
         frame.update()
+   
+class ReviewWindow(Window):    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args,**kwargs)
+
+    def post(self):
+        self.form_type = ReviewForm
+        self.windows = {
+            "results.html":ResultsWindow
+        }
+        self._initialize()
+        tk_listbox = self.get_frame_by_id("categories-list")
+        Window.client.add_instruction("get_categories",None)
+        self.categories = Window.client.data_queue.get()
+        tk_listbox.insert(tk.END,*self.categories)
+        #add the list of categories to the list box
+        self.form.add_field(Field("listbox","categories-list",[tk_listbox,self.categories]))
+
         
 
 class Client():
@@ -213,9 +253,11 @@ class Client():
             "initialize_db":self.initialize_db,
             "send_query_to_db":self.send_query_to_db,
             "get_image_from_generator":self.get_image_from_generator,
-            "get_categories":self.get_categories,
+            "get_tag_counts":self.get_tag_counts,
             "request_export":self.request_export,
             "send_reject_urls_to_db":self.send_reject_urls_to_db,
+            "get_categories":self.get_categories,
+            "get_images_from_category":self.get_images_from_category,
         }
         self.instructions_queue = queue.Queue()
         self.instructions_queue.put(("initialize_db",(None,)))
@@ -224,7 +266,8 @@ class Client():
         db_thread = threading.Thread(target=self.run)
         db_thread.start()
         windows = {
-            "search.html":SearchWindow
+            "search.html":SearchWindow,
+            "review.html":ReviewWindow,
         }
 
         Window.set_client(self)
@@ -273,14 +316,11 @@ class Client():
         self.socket.recv()
         return data
 
-    def get_categories(self,category=None):
+    def get_tag_counts(self,category=None):
         self.data_queue.put(self.db.get_count_of_tags(category))
 
-
-    def generate_tag_count_graph(self,tag_counts):
-        #plot the tags based on occurrence
-        #tag_counts is tuple of list of tags and list of counts
-        pass
+    def get_categories(self,*args):
+        self.data_queue.put(self.db.get_categories())
 
     def initialize_db(self,*args):
         self.db = data.SqlDb()
@@ -290,8 +330,16 @@ class Client():
         print("shutting down")
 
     def get_image_from_generator(self,*args):
-        self.data_queue.put(next(self.images))
-        pass
+        try:
+            self.data_queue.put(next(self.images))
+        except Exception as e:
+            pass
+        
+        
+
+    def get_images_from_category(self,category):
+        print(category)
+        self.images = self.db.get_images_from_category(category)
 
     def run(self):
         print("running" if self.is_running else "not running")
