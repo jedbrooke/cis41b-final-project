@@ -13,7 +13,6 @@ import re
 class SqlDb():
     DB_NAME = 'images.db'
     CLIENT = 'd46861ef7ecb2dc'
-    CLIENT_SECRET = '8889ad15753f373b14b2cfb74de86004837c7137' # Shouldn't be here
 
     def __init__(self):
         """ 
@@ -78,7 +77,6 @@ class SqlDb():
                     continue
 
                 album_categories = [(i['name'],) for i in image['tags']] 
-
                 # Sometimes an album won't get tagged, but will show up in the title, force the category
                 if not album_categories:
                     album_categories = [(category,)]
@@ -100,7 +98,6 @@ class SqlDb():
                     metadata['categories'].append((category,))
 
                 self.add_to_db(page.content, metadata)
-
                 print('Downloaded', i, 'images of', n)
                 i += 1
 
