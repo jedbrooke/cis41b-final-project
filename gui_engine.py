@@ -179,7 +179,7 @@ class Window():
 
         if main:
             self.win = tk.Tk()
-            self.win.protocol("WM_DELETE_WINDOW", self.win.quit())
+            self.win.protocol("WM_DELETE_WINDOW", self.shut_down)
         else:
             self.win = tk.Toplevel()
             self.win.transient(master=master)
@@ -195,15 +195,21 @@ class Window():
         if main:
             self._initialize()
 
+    def start(self):
+        self.win.mainloop()
+        print("mainloop over")
+
     def _initialize(self):
         self.form = self.form_type(window=self)
         self.buildElements()
         self.main_frame.grid()
-        if self.isMain:
-            self.win.mainloop()
 
     def _initPath(self,path):
             self.soup = TagUtility.get_html(path)
+
+    def shut_down(self):
+        print("quitting in window")
+        self.win.quit()
 
     def post(self):
            self._initialize()   

@@ -14,20 +14,6 @@ import matplotlib.pyplot as plt
 SERVER_ADDR = "127.0.0.1"
 SERVER_PORT = 5551
 
-class Queue(queue.Queue):
-    def __init__(self):
-        super().__init__()
-    
-    def put(self,*args,**kwargs):
-        print("putting in to queue")
-        return super().put(*args,**kwargs)
-
-    def get(self,*args,**kwargs):
-        print("Getting from queue")
-        return super().get(*args,**kwargs)
-
-    
-
 class MainButton(Button):
     def __init__(self, *args, **kwargs):
         super().__init__(*args,**kwargs)
@@ -119,34 +105,51 @@ class ResultsWindow(Window):
         }
 
     def post(self,category=None,settings=None):
-        columns = 3
         if category:
+            Window.client.add_instruction("send_query_to_db",category,settings)
             self.button = ResultsButton
             self.form_type = ResultsForm
             self.category = category
-            Window.client.add_instruction("send_query_to_db",category,settings)
+            
+        t = threading.Thread(target=self.get_images, args=(category,settings))
+        t.start()
+        
+    def get_images(self,category=None,settings=None):
+        if category:
             self.image_data = []
+            timed_out = False
             for i in range(settings['n']):
                 Window.client.add_instruction("get_image_from_generator",None)
-                print(Window.client.data_queue.qsize())
                 try:
-                    self.image_data.append([Window.client.data_queue.get(timeout=30),False])
+                    self.image_data.append([Window.client.data_queue.get(timeout=20),False])
                 except queue.Empty as e:
+                    print("timed out")
                     print(e)
+                    timed_out = True
                     break
 
-            self._initialize()
-            frame = self.get_frame_by_id("display")
+            initialize = True
+
 
         else:
             frame = self.get_frame_by_id("display")
             for child in frame.winfo_children():
                 child.destroy()
+            initialize = False
 
+        
+        self.win.after(100,lambda: self.generate_images(initialize))
+
+    def generate_images(self,init=False):
+        if init:
+            self._initialize()
+        frame = self.get_frame_by_id("display")
+        columns = 3
         self.display_images = []
         self.boxes = {}
 
         grid_count = 0
+        print("creating images")
         for i,image in enumerate(self.image_data):
             if image[1]:
                 continue
@@ -208,7 +211,7 @@ class Client():
         }
         self.instructions_queue = queue.Queue()
         self.instructions_queue.put(("initialize_db",(None,)))
-        self.data_queue = Queue()
+        self.data_queue = queue.Queue()
         self.is_running = True
         db_thread = threading.Thread(target=self.run)
         db_thread.start()
@@ -217,7 +220,10 @@ class Client():
         }
 
         Window.set_client(self)
-        Window(TagUtility.get_html("gui_pages/main.html"),main=True,windows=windows)
+        w = Window(TagUtility.get_html("gui_pages/main.html"),main=True,windows=windows)
+        w.start()
+
+        print("quitting")
         self.instructions_queue.put(("quit",(None,)))
         db_thread.join()
 
@@ -232,6 +238,7 @@ class Client():
     def send_query_to_db(self,q,settings):
         #images = self.db.get_nimages_with_category()
         print("querying db")
+        print(q,settings)
         self.images = self.db.download_nimages_with_category(q,**settings)
         #images is a list/generator of the image blobs
         #pass images ot gui
@@ -277,7 +284,7 @@ class Client():
 
     def run(self):
         print("running" if self.is_running else "not running")
-        while self.is_running or not self.instructions_queue.empty():
+        while self.is_running:
             print("waiting for instructions")
             function,args = self.instructions_queue.get()
             print("running",function)
