@@ -37,7 +37,7 @@ class SqlDb():
         try:
             self.cur.execute('''INSERT INTO  Filetypes (filetype) VALUES (?) ''', (metadata['filetype'],))
             self.cur.executemany('''INSERT INTO  Categories (category) VALUES (?) ''', metadata['categories'])
-            self.cur.execute('''INSERT INTO  Images (file, url, nsfw, sizetype) VALUES (?, ?, ?, ?); ''', (image, metadata['url'], metadata['nsfw'], metadata['sizetype']))
+            self.cur.execute('''INSERT INTO  Images (file, url, nsfw, sizetype, reject) VALUES (?, ?, ?, ?, ?); ''', (image, metadata['url'], metadata['nsfw'], metadata['sizetype'], 0))
             img_id = self.cur.execute('''SELECT id FROM Images WHERE url = (?)''', (metadata['url'],)).fetchone()[0]
             sql_stmt = '''SELECT id FROM Categories WHERE category in ({})'''.format(','.join(['?']*len(metadata['categories'])))
             args = [i[0] for i in metadata['categories']]
@@ -86,8 +86,9 @@ class SqlDb():
                     continue
 
                 url = image['link']
-                page = requests.get(url)
-                metadata = {'url': url, 'nsfw': image['nsfw'], 'filetype': image['link'][-3:], 'sizetype': None, 'categories': album_categories, 'reject': 0}
+                url_thumb = url[:-4] + 'm' + url[-4:]
+                page = requests.get(url_thumb)
+                metadata = {'url': url, 'nsfw': image['nsfw'], 'filetype': image['link'][-3:], 'sizetype': 'm', 'categories': album_categories, 'reject': 0}
                 
                 # # Sometimes an album won't get tagged, but will show up in the title, force the category
                 # if metadata['categories'] == []:
@@ -118,7 +119,7 @@ class SqlDb():
         while True:
             results = self.cur.execute('''SELECT * FROM Images i JOIN Image_Categories ic ON i.id = ic.img_id
                                             JOIN Categories c ON ic.category_id = c.id 
-                                            WHERE c.category = ?''', (category,)).fetchall()
+                                            WHERE c.category = ? AND IFNULL(i.reject, 0) = 0''', (category,)).fetchall()
             if results:
                 for result in results:
                     yield result
