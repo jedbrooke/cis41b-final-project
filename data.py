@@ -35,14 +35,25 @@ class SqlDb():
         image is an image binary
         """
         try:
+            # Insert filetype
             self.cur.execute('''INSERT INTO  Filetypes (filetype) VALUES (?) ''', (metadata['filetype'],))
+
+            # Insert Categories
             self.cur.executemany('''INSERT INTO  Categories (category) VALUES (?) ''', metadata['categories'])
+
+            # Insert image and metadata
             self.cur.execute('''INSERT INTO  Images (file, url, nsfw, sizetype, reject) VALUES (?, ?, ?, ?, ?); ''', (image, metadata['url'], metadata['nsfw'], metadata['sizetype'], 0))
+
+            # Get filetype and category ids
+            filetype_id = self.cur.execute('''SELECT id FROM Filetypes WHERE filetype = (?)''', (metadata['filetype'],)).fetchone()[0]
+            self.cur.execute('''UPDATE Images SET filetype = ? WHERE url = ?''', (filetype_id, metadata['url']))
+            
             img_id = self.cur.execute('''SELECT id FROM Images WHERE url = (?)''', (metadata['url'],)).fetchone()[0]
             sql_stmt = '''SELECT id FROM Categories WHERE category in ({})'''.format(','.join(['?']*len(metadata['categories'])))
             args = [i[0] for i in metadata['categories']]
             img_cat_list = [(img_id, i[0]) for i in self.cur.execute(sql_stmt, args).fetchall()]
             self.cur.executemany('''INSERT INTO  Image_Categories (img_id, category_id) VALUES (?, ?) ''', img_cat_list)
+
             self.conn.commit() ## Is there overhead for doing this a lot?
         except sqlite3.OperationalError as e: # pylint: disable=maybe-no-member
             print(str(e))
