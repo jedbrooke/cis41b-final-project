@@ -7,6 +7,7 @@ import socket
 import serverdb
 import pickle
 import threading
+import queue
 
 HOST = 'localhost'
 PORT = 5551
@@ -16,7 +17,17 @@ class Server():
     def __init__(self, timeout = 60):
         
         threads = []
+        self.instructions_queue = queue.Queue()
+        self.is_running = True
+        self.options = {'send_data': self.get_data_from_client, 
+                        'clear_db': self.clear_db,
+                        'check_if_trainable': self.check_db_for_training,
+                        'train': self.train_network}
 
+        # Start queue handler thread
+        db_thread = threading.Thread(target=self.run)
+        db_thread.start()
+        
         with socket.socket() as s:
             try:
                 # Listen for the clients
@@ -35,14 +46,23 @@ class Server():
                 print('time out')
                 # break
 
+    def run(self):
+        while self.is_running:
+            function, args = self.instructions_queue.get()
+            self.options[function](*args)
+
+    def add_instruction(self,instruction,*args):
+        self.instructions_queue.put((instruction,(*args,)))
+
+
     def get_client_choice(self, s, conn):
         # Initialize db
         db = serverdb.SqlDb()  
 
-        options = {'send_data': self.get_data_from_client, 
-                'clear_db': self.clear_db,
-                'check_if_trainable': self.check_db_for_training,
-                'train': self.train_network}
+        # options = {'send_data': self.get_data_from_client, 
+        #         'clear_db': self.clear_db,
+        #         'check_if_trainable': self.check_db_for_training,
+        #         'train': self.train_network}
 
         while True:
             from_client = pickle.loads(conn.recv(1024))
@@ -51,9 +71,10 @@ class Server():
                 print('goodbye')
                 break
             else:                        
-                options[from_client['command']](db, from_client)  
+                self.add_instruction(from_client['command'], db, from_client)
+                
 
-    def get_data_from_client(self, *args):
+    def get_data_from_client(self, db, req):
         """  
         Gets the information of which files to download from client
         """
@@ -67,17 +88,17 @@ class Server():
         # download and add urls and tags to DB
         print('downloading to db')
         for url, tag in zip(urls, tags):
-            self.db.add_to_db(url, tag)        
+            db.add_to_db(url, tag)        
 
-    def clear_db(self, *args):
+    def clear_db(self, db, req):
         """  
         Resets the db
         """
         print('Restting db.')
-        self.db.create_db()
+        db.create_db()
         print('DB reset successful.')
 
-    def check_db_for_training(self, *args):
+    def check_db_for_training(self, db, req):
         """  
         Checks the db for sufficient data to start training
         Suppose sufficient data is >= 2 categories and >= 10 images for testing purposes
@@ -100,16 +121,14 @@ class Server():
 
         return ready
 
-    def train_network(self, *args):
+    def train_network(self, db, req):
         """  
         Check if sufficient data in the local db and then print message about training
         """
-        if self.check_db_for_training():
+        if self.check_db_for_training(db, req):
             print('Training in progress. Please come back in a few hours.')
         else:
             print('Not enough data available. Please run db check.')
 
 if __name__ == "__main__":
-
-
     s = Server()
