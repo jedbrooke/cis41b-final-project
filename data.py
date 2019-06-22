@@ -159,12 +159,15 @@ class SqlDb():
         Returns a list of all the categories on the db (also count of each category)
         """
         if count:
-            return self.cur.execute('''SELECT c.category, COUNT(ic.category_id) as category_count
+            return self.cur.execute('''SELECT c.category, COUNT(ic.category_id) AS category_count
                                 FROM Categories c JOIN Image_Categories ic ON c.id = ic.category_id 
                                 GROUP BY ic.category_id
                                 ORDER BY category_count;''').fetchall()
         else: 
-            return self.cur.execute('SELECT category FROM Categories;').fetchall()
+            return self.cur.execute('''SELECT c.category
+                                FROM Categories c JOIN Image_Categories ic ON c.id = ic.category_id 
+                                GROUP BY ic.category_id
+                                ORDER BY COUNT(ic.category_id) DESC;''').fetchall()
 
     def delete_images(self, img_urls):
         """ 
