@@ -59,11 +59,6 @@ class Server():
         # Initialize db
         db = serverdb.SqlDb()  
 
-        # options = {'send_data': self.get_data_from_client, 
-        #         'clear_db': self.clear_db,
-        #         'check_if_trainable': self.check_db_for_training,
-        #         'train': self.train_network}
-
         while True:
             from_client = pickle.loads(conn.recv(1024))
 
@@ -71,8 +66,7 @@ class Server():
                 print('goodbye')
                 break
             else:                        
-                self.add_instruction(from_client['command'], db, from_client)
-                
+                self.add_instruction(from_client['command'], db, from_client)                
 
     def get_data_from_client(self, db, req):
         """  
