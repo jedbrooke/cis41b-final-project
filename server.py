@@ -6,14 +6,16 @@ This server handles database checking and downloading of the large full sized fi
 import socket
 import serverdb
 import pickle
+import threading
 
 HOST = 'localhost'
 PORT = 5551
 
 class Server():
+    MAX_CLIENTS = 4
     def __init__(self, timeout = 60):
-        # Initialize db
-        self.db = serverdb.SqlDb()
+        
+        threads = []
 
         with socket.socket() as s:
             try:
@@ -21,26 +23,35 @@ class Server():
                 s.bind((HOST, PORT))
                 print("The training session is at:", str(HOST)+":"+str(PORT), 'and will last for', str(timeout), 'seconds.')
                 s.listen()
-                (conn, addr) = s.accept()
-                print(addr, 'connected.')
-                options = {'send_data': self.get_data_from_client, 
-                           'clear_db': self.clear_db,
-                           'check_if_trainable': self.check_db_for_training,
-                           'train': self.train_network}
 
-                while True:
-                    from_client = pickle.loads(conn.recv(1024))
-
-                    if from_client['command'] == 'q':
-                        print('goodbye')
-                        break
-                    else:                        
-                        options[from_client['command']](from_client)  
-
+                for i in range(self.MAX_CLIENTS):
+                    (conn, addr) = s.accept()
+                    
+                    print(addr, 'connected.')
+                    t = threading.Thread( target = self.get_client_choice, args = (s, conn))
+                    threads.append(t)
+                    t.start()
             except socket.timeout:
                 print('time out')
                 # break
 
+    def get_client_choice(self, s, conn):
+        # Initialize db
+        db = serverdb.SqlDb()  
+
+        options = {'send_data': self.get_data_from_client, 
+                'clear_db': self.clear_db,
+                'check_if_trainable': self.check_db_for_training,
+                'train': self.train_network}
+
+        while True:
+            from_client = pickle.loads(conn.recv(1024))
+
+            if from_client['command'] == 'q':
+                print('goodbye')
+                break
+            else:                        
+                options[from_client['command']](db, from_client)  
 
     def get_data_from_client(self, *args):
         """  
@@ -99,4 +110,6 @@ class Server():
             print('Not enough data available. Please run db check.')
 
 if __name__ == "__main__":
+
+
     s = Server()
