@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Search</title>
+</head>
+<body>
+	<img src="gui_pages/images/search.png">
+	<div sticky=E padx=15>
+		<label sticky=E row=0 column=0>Settings:</label>
+		<button sticky=E row=0 column=1 link="settings.html"><img src="gui_pages/images/gear.png">edit:</button>
+	</div>
+	<form action="search">
+		<label row=0 column=0>Search String:</label>
+		<input row=0 column=1 type="text" name="query">
+		<label row=1 column=0>Number of images</label>
+		<input row=1 column=1 type="text" name="number" default="10">
+		<input type="submit" name="submit">
+	</form>
+	
+</body>
+</html>

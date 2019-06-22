@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Main window</title>
+    </head>
+    <body>
+        <label>first</label>
+        <div scrolling="false">
+            <div padx=15 pady=10>
+                <label>Hello!</label>
+                <button action="print_hello">Print Hello</button>
+            </div>
+            <label>bye!</label>
+            <listbox height=3>
+                <li>yahoo</li>
+                <li>imgur</li>
+                <li>flickr</li>
+            </listbox>
+            <form>
+                <label>Enter your name</label>
+                <input type="text" name="user_text">
+                <label type="display" name="display_user_text"></label>
+                <select name="radio-choose" scrolling=true multiple="true">
+                    <option value="1">Choice 1</option>
+                    <option value="2">Choice 2</option>
+                    <option value="3">
+                        Choice 3
+                        <img src="gui_pages/test_images/windows-all-day_4.png">
+                    </option>
+                </select>
+                <listbox scrolling=true name="listbox_test" selectmode=multiple>
+                    <li>hello 25</li>
+                    <li>hello 26</li>
+                    <li>hello 27</li>
+                    <li>hello 28</li>
+                    <li>hello 29</li>
+                    <li>hello 30</li>
+                    <li>hello 31</li>
+                    <li>hello 32</li>
+                    <li>hello 33</li>
+                    <li>hello 34</li>
+                    <li>hello 35</li>
+                    <li>hello 36</li>
+                    <li>hello 37</li>
+                    <li>hello 38</li>
+                    <li>hello 39</li>
+                </listbox>
+                <input type="submit" name="submit">
+            </form>
+            <img src="gui_pages/test_images/mordorFull.gif">
+            <button link="testing_subpage1.html">Click here!</button>
+         </div>
+        <div scrolling="false">
+            <div padx=15 pady=10 scrolling=false>
+                <div>
+                    <label row=0 column=0>hello 20</label>
+                    <label row=0 column=1>hello 21</label>
+                    <label row=0 column=2>hello 22</label>
+                    <label row=0 column=3>hello 23</label>
+                    <label row=0 column=4>hello 24</label>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
