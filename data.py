@@ -66,6 +66,10 @@ class SqlDb():
             data = json.loads(response.text)
             data = data['data']
             
+            if not data:
+                print('no results found')
+                return False
+            
             for image in data:
                 # Reject albums
                 if image['link'][-3:] != 'jpg':
