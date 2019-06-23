@@ -20,7 +20,6 @@ class SqlDb(data.SqlDb):
         """
         super().__init__()
 
-
     def add_to_db(self, image_url, tag):
         """ 
         Adds image to db from url
