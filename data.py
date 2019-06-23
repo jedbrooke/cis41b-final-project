@@ -47,7 +47,7 @@ class SqlDb():
             # Get filetype and category ids
             filetype_id = self.cur.execute('''SELECT id FROM Filetypes WHERE filetype = (?)''', (metadata['filetype'],)).fetchone()[0]
             self.cur.execute('''UPDATE Images SET filetype = ? WHERE url = ?''', (filetype_id, metadata['url']))
-            
+
             img_id = self.cur.execute('''SELECT id FROM Images WHERE url = (?)''', (metadata['url'],)).fetchone()[0]
             sql_stmt = '''SELECT id FROM Categories WHERE category in ({})'''.format(','.join(['?']*len(metadata['categories'])))
             args = [i[0] for i in metadata['categories']]
@@ -77,7 +77,7 @@ class SqlDb():
             response = requests.request('GET', url, headers = headers)
             data = json.loads(response.text)
             data = data['data']
-            
+
             if not data:
                 print('no results found')
                 return False
@@ -282,6 +282,9 @@ class SqlDb():
 
 if __name__ == "__main__":
     db = SqlDb()
+    category = 'de anza student'
+    gen = db.download_nimages_with_category(category, 10, filter_nsfw=True, blacklist=['aww'])
+
     category = 'dogs'
     gen = db.download_nimages_with_category(category, 10, filter_nsfw=True, blacklist=['aww'])
 
