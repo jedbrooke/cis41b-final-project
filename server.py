@@ -55,12 +55,7 @@ class Server():
     def add_instruction(self,instruction,*args):
         self.instructions_queue.put((instruction, (*args,)))
 
-
     def get_client_choice(self, s, conn):
-        # Initialize db
-        # db = serverdb.SqlDb()  
-        db = []
-
         while True:
             from_client = pickle.loads(conn.recv(1024))
 
@@ -68,9 +63,9 @@ class Server():
                 print('goodbye')
                 break
             else:                        
-                self.add_instruction(from_client['command'], db, from_client)                
+                self.add_instruction(from_client['command'], from_client)                
 
-    def get_data_from_client(self, db, req):
+    def get_data_from_client(self, req):
         """  
         Gets the information of which files to download from client
         """
@@ -83,7 +78,7 @@ class Server():
         for url, tag in zip(urls, tags):
             self.db.add_to_db(url, tag)        
 
-    def clear_db(self, db, req):
+    def clear_db(self, req):
         """  
         Resets the db
         """
@@ -91,7 +86,7 @@ class Server():
         self.db.create_db()
         print('DB reset successful.')
 
-    def check_db_for_training(self, db, req):
+    def check_db_for_training(self, req):
         """  
         Checks the db for sufficient data to start training
         Suppose sufficient data is >= 2 categories and >= 10 images for testing purposes
@@ -112,11 +107,11 @@ class Server():
 
         return ready
 
-    def train_network(self, db, req):
+    def train_network(self, req):
         """  
         Check if sufficient data in the local db and then print message about training
         """
-        if self.check_db_for_training(db, req):
+        if self.check_db_for_training(req):
             print('Training in progress. Please come back in a few hours.')
         else:
             print('Not enough data available. Please run db check.')
