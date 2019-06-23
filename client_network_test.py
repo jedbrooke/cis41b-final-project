@@ -26,7 +26,8 @@ def get_choice(options):
     return choice
 
 def send_data(data_dict):
-
+    data_dict['data'] = [['https://i.imgur.com/zQrpML1.jpg'],
+                        ['dogs']]
     s.send(pickle.dumps(data_dict))
 
 def clear_db(data_dict):

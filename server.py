@@ -73,11 +73,8 @@ class Server():
         Gets the information of which files to download from client
         """
         print('Getting data from client')
-        argss = {}
-        argss['data'] = [['https://i.imgur.com/zQrpML1.jpg'],
-                        ['dogs']]
-        urls = argss['data'][0]
-        tags = argss['data'][1]
+        urls = req['data'][0]
+        tags = req['data'][1]
 
         # download and add urls and tags to DB
         print('downloading to db')
