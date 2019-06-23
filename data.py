@@ -70,6 +70,7 @@ class SqlDb():
 
         page_no = 0
         i = 1
+
         while i < n:
             headers = {'Authorization': 'Client-ID ' + self.CLIENT}
             url = 'https://api.imgur.com/3/gallery/search/top/all/{}?q={} ext: jpg NOT album'.format(page_no, category)
@@ -86,8 +87,14 @@ class SqlDb():
                 if image['link'][-3:] != 'jpg':
                     continue
 
+                # Reject NSFW if flag
                 if image['nsfw'] and filter_nsfw:
                     print('Skipping NSFW Image')
+                    continue
+
+                # Skip image if already in db
+                if self.cur.execute('SELECT EXISTS(SELECT 1 from Images WHERE url = ?)', (image['link'],)).fetchone()[0]:
+                    print('Image in DB already.')
                     continue
 
                 album_categories = [(i['name'],) for i in image['tags']] 
