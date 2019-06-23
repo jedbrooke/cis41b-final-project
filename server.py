@@ -60,7 +60,6 @@ class Server():
             from_client = pickle.loads(conn.recv(1024))
 
             if from_client['command'] == 'q':
-                print('goodbye')
                 break
             else:                        
                 self.add_instruction(from_client['command'], from_client)                
