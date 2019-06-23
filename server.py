@@ -47,17 +47,19 @@ class Server():
                 # break
 
     def run(self):
+        self.db = serverdb.SqlDb()
         while self.is_running:
             function, args = self.instructions_queue.get()
             self.options[function](*args)
 
     def add_instruction(self,instruction,*args):
-        self.instructions_queue.put((instruction,(*args,)))
+        self.instructions_queue.put((instruction, (*args,)))
 
 
     def get_client_choice(self, s, conn):
         # Initialize db
-        db = serverdb.SqlDb()  
+        # db = serverdb.SqlDb()  
+        db = []
 
         while True:
             from_client = pickle.loads(conn.recv(1024))
@@ -79,14 +81,14 @@ class Server():
         # download and add urls and tags to DB
         print('downloading to db')
         for url, tag in zip(urls, tags):
-            db.add_to_db(url, tag)        
+            self.db.add_to_db(url, tag)        
 
     def clear_db(self, db, req):
         """  
         Resets the db
         """
         print('Restting db.')
-        db.create_db()
+        self.db.create_db()
         print('DB reset successful.')
 
     def check_db_for_training(self, db, req):
