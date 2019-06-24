@@ -42,7 +42,7 @@ class Server():
                     (conn, addr) = s.accept()
                     
                     print(addr, 'connected.')
-                    t = threading.Thread( target = self.get_client_choice, args = (s, conn))
+                    t = threading.Thread(target = self.get_client_choice, args = (s, conn))
                     threads.append(t)
                     t.start()
             except socket.timeout:
@@ -74,9 +74,9 @@ class Server():
             if from_client['command'] == 'q':
                 break
             else:                        
-                self.add_instruction(from_client['command'], from_client)                
+                self.add_instruction(from_client['command'], from_client, conn)        
 
-    def get_data_from_client(self, req):
+    def get_data_from_client(self, req, conn):
         """  
         Gets the information of which files to download from client
         """
@@ -89,7 +89,7 @@ class Server():
         for url, tag in zip(urls, tags):
             self.db.add_to_db(url, tag)        
 
-    def clear_db(self, req):
+    def clear_db(self, req, conn):
         """  
         Resets the db
         """
@@ -97,7 +97,7 @@ class Server():
         self.db.create_db()
         print('DB reset successful.')
 
-    def check_db_for_training(self, req):
+    def check_db_for_training(self, req, conn):
         """  
         Checks the db for sufficient data to start training
         Suppose sufficient data is >= 2 categories and >= 10 images for testing purposes
@@ -118,11 +118,11 @@ class Server():
 
         return ready
 
-    def train_network(self, req):
+    def train_network(self, req, conn):
         """  
         Check if sufficient data in the local db and then print message about training
         """
-        if self.check_db_for_training(req):
+        if self.check_db_for_training(req, conn):
             print('Training in progress. Please come back in a few hours.')
         else:
             print('Not enough data available. Please run db check.')
