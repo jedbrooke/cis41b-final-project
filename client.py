@@ -11,6 +11,7 @@ import matplotlib as mpl
 mpl.use('TkAgg') # tell matplotlib to work with Tkinter
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
+from tkinter.ttk import Progressbar as Pbar
 
 SERVER_ADDR = "127.0.0.1"
 SERVER_PORT = 5551
@@ -129,39 +130,25 @@ class ResultsWindow(Window):
             self.form_type = ResultsForm
             self.category = category
 
+        self.pbar = Pbar(self.win,mode='indeterminate')
+        self.pbar.grid(padx=50, pady=50)
+        self.pbar.start()
+
         t = threading.Thread(target=self.get_images, args=(category,settings))
         t.start()
         
     def get_images(self,category=None,settings=None):
         if category:
             self.image_data = []
-            timed_out = False
-            if settings:
-                for i in range(settings['n']):
-                    Window.client.add_instruction("get_image_from_generator",None)
-                    try:
-                        #img = dq.get
-                        #if not image: break
-                        self.image_data.append([Window.client.data_queue.get(),False])
-                    except queue.Empty as e:
-                        print("timed out")
-                        print(e)
-                        timed_out = True
-                        break
-            else:
-                while True:
-                    Window.client.add_instruction("get_image_from_generator",None)
-                    try:
-                        self.image_data.append([Window.client.data_queue.get(timeout=2),False])
-                    except queue.Empty as e:
-                        print("timed out")
-                        print(e)
-                        timed_out = True
-                        break
-
+            fetching = True
+            while fetching:
+                Window.client.add_instruction("get_image_from_generator",None)
+                image = Window.client.data_queue.get()
+                if not image:
+                    fetching = False
+                    continue
+                self.image_data.append([image,False])
             initialize = True
-
-
 
         else:
             frame = self.get_frame_by_id("display")
@@ -170,12 +157,14 @@ class ResultsWindow(Window):
             initialize = False
 
         
-        self.win.after(100,lambda: self.generate_images(initialize))
+        self.win.after(10,lambda:self.generate_images(initialize))
 
-    def generate_images(self,init=False):
-        if init:
+    def generate_images(self,initialize=False):
+        if initialize:
             self._initialize()
         frame = self.get_frame_by_id("display")
+        self.pbar.stop()
+        self.pbar.destroy()
         columns = 3
         self.display_images = []
         self.boxes = {}
@@ -332,6 +321,7 @@ class Client():
         print("shutting down")
 
     def get_image_from_generator(self,*args):
+        print("getting image")
         try:
             self.data_queue.put(next(self.images))
         except Exception as e:
