@@ -88,12 +88,16 @@ class Server():
         """  
         Gets the information of which files to download from client
         """
-        print('Getting data from client')
+        msg = 'Getting data from client'
+        conn.send(pickle.dumps(msg))
+        print(msg)
         urls = req['data'][0]
         tags = req['data'][1]
 
         # download and add urls and tags to DB
-        print('downloading to db')
+        msg = 'downloading to db'
+        conn.send(pickle.dumps(msg))
+        print(msg)
         for url, tag in zip(urls, tags):
             self.db.add_to_db(url, tag)        
 
@@ -101,9 +105,13 @@ class Server():
         """  
         Resets the db
         """
-        print('Restting db.')
+        msg = 'Restting db.'
+        conn.send(pickle.dumps(msg))
+        print(msg)
         self.db.create_db()
-        print('DB reset successful.')
+        msg = 'DB reset successful.'
+        conn.send(pickle.dumps(msg))
+        print(msg)
 
     def check_db_for_training(self, req, conn):
         """  
@@ -115,13 +123,21 @@ class Server():
         
         ready = False
         if n_categories < 2 and n_images < 10:
-            print('DB needs more categories and images')
+            msg = 'DB needs more categories and images'
+            conn.send(pickle.dumps(msg))
+            print(msg)
         elif n_images < 10: # Check this n_images condition
-            print('DB needs more images')
+            msg = 'DB needs more images'
+            conn.send(pickle.dumps(msg))
+            print(msg)
         elif n_categories < 2:
-            print('DB needs more categories')
+            msg = 'DB needs more categories'
+            conn.send(pickle.dumps(msg))
+            print(msg)
         else:
-            print('DB is good to go')
+            msg = 'DB is good to go'
+            conn.send(pickle.dumps(msg))
+            print(msg)
             ready = True
 
         return ready
@@ -131,9 +147,13 @@ class Server():
         Check if sufficient data in the local db and then print message about training
         """
         if self.check_db_for_training(req, conn):
-            print('Training in progress. Please come back in a few hours.')
+            msg = 'Training in progress. Please come back in a few hours.'
+            conn.send(pickle.dumps(msg))
+            print(msg)
         else:
-            print('Not enough data available. Please run db check.')
+            msg = 'Not enough data available. Please run db check.'
+            conn.send(pickle.dumps(msg))
+            print(msg)
     
     # def shut_down(self, req, conn):
     #     if self.n_connected_clients <= 1:
