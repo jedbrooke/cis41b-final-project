@@ -19,7 +19,7 @@ class Server():
     def __init__(self, timeout = 5):
         """
         The server handles up to MAX_CLIENTS connecting at a time and accepts commands.
-        This server runs forever and does not get shut down unless a command to shut down is sent
+        This server runs forever and does not get shut down unless a command to shut down is sent when there is only 1 client connected
         """
         print('Main thread:', threading.get_ident())
 
