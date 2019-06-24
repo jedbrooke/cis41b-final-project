@@ -17,7 +17,7 @@ def get_choice(options):
     print('q: quit')
     choice = ''
 
-    while choice not in tuple('12345q'):
+    while choice not in tuple('1234q'):
         choice = input('Enter your choice: ')
     if choice == 'q':
         pass
