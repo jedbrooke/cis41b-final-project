@@ -31,6 +31,7 @@ class Server():
                         # 'shut_down': self.shut_down
                         }
         self.n_connected_clients = 0
+        self.lock = threading.Lock()
 
         # Start queue handler thread
         db_thread = threading.Thread(target=self.run)
@@ -47,7 +48,8 @@ class Server():
             while self.is_running and self.n_connected_clients <= self.MAX_CLIENTS:
                 try: 
                     (conn, addr) = s.accept()
-                    self.n_connected_clients += 1
+                    with self.lock:
+                        self.n_connected_clients += 1
                     print(addr, 'connected.')
                     t = threading.Thread(target = self.get_client_choice, args = (s, conn))
                     threads.append(t)
@@ -72,7 +74,7 @@ class Server():
             except queue.Empty:
                 # print(str(e))
                 pass
-                
+
         # Close connection with db
         self.db.__del__()
         print('run ended')
@@ -91,7 +93,8 @@ class Server():
             from_client = pickle.loads(conn.recv(1024))
 
             if from_client['command'] == 'q':
-                self.n_connected_clients -= 1
+                with self.lock:
+                    self.n_connected_clients -= 1
                 break
             elif from_client['command'] == 'shut_down':
                 self.shut_down(conn)
