@@ -8,6 +8,7 @@ import serverdb
 import pickle
 import threading
 import queue
+import sys
 
 HOST = 'localhost'
 PORT = 5551
@@ -25,10 +26,14 @@ class Server():
         self.options = {'send_data': self.get_data_from_client, 
                         'clear_db': self.clear_db,
                         'check_if_trainable': self.check_db_for_training,
-                        'train': self.train_network}
+                        'train': self.train_network,
+                        # 'shut_down': self.shut_down
+                        }
+        self.n_connected_clients = 0
 
         # Start queue handler thread
         db_thread = threading.Thread(target=self.run)
+        # db_thread.setDaemon(True)
         db_thread.start()
         
         with socket.socket() as s:
@@ -40,14 +45,14 @@ class Server():
 
                 for i in range(self.MAX_CLIENTS):
                     (conn, addr) = s.accept()
-                    
+                    self.n_connected_clients += 1
                     print(addr, 'connected.')
                     t = threading.Thread(target = self.get_client_choice, args = (s, conn))
                     threads.append(t)
                     t.start()
             except socket.timeout:
                 print('time out')
-                # break
+                # break                        
 
     def run(self):
         """  
@@ -72,7 +77,10 @@ class Server():
             from_client = pickle.loads(conn.recv(1024))
 
             if from_client['command'] == 'q':
+                self.n_connected_clients -= 1
                 break
+            # elif from_client['command'] == 'shut_down':
+            #     self.shut_down(conn)
             else:                        
                 self.add_instruction(from_client['command'], from_client, conn)        
 
@@ -126,6 +134,18 @@ class Server():
             print('Training in progress. Please come back in a few hours.')
         else:
             print('Not enough data available. Please run db check.')
+    
+    # def shut_down(self, req, conn):
+    #     if self.n_connected_clients <= 1:
+    #         status = True
+    #         self.is_running = False
+    #         conn.send(pickle.dumps(status))
+    #         print('Good bye')
+    #         # quit()
+    #     else:
+    #         status = False
+    #         print('There are', self.n_connected_clients, 'clients still connected.')
+    #         conn.send(pickle.dumps(status))
 
 if __name__ == "__main__":
     s = Server()

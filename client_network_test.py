@@ -13,10 +13,11 @@ def get_choice(options):
     print('2: clear db')
     print('3: Check if db is trainable')
     print('4: train network')
+    # print('5: shut down server and quit')
     print('q: quit')
     choice = ''
 
-    while choice not in tuple('1234q'):
+    while choice not in tuple('12345q'):
         choice = input('Enter your choice: ')
     if choice == 'q':
         pass
@@ -39,6 +40,14 @@ def check_db_for_training(data_dict):
 def train_network(data_dict):
     s.send(pickle.dumps(data_dict))
 
+# def shut_down(data_dict):
+#     s.send(pickle.dumps(data_dict))
+#     res = pickle.loads(s.recv(1024))
+#     if res:
+#         raise SystemExit
+#     else:
+#         print('There are still active clients.')
+
 with socket.socket() as s: # create a socket
     s.connect((HOST, PORT)) # connect to a server at a particular host and port
     print("Client connect to:", HOST, "port:", PORT)
@@ -47,6 +56,7 @@ with socket.socket() as s: # create a socket
                 'clear_db': clear_db,
                 'check_if_trainable': check_db_for_training,
                 'train': train_network,
+                # 'shut_down': shut_down
                 }
     choice = get_choice(options)
 
@@ -55,5 +65,5 @@ with socket.socket() as s: # create a socket
         if choice == 'q':
             s.send(pickle.dumps(data_dict))
             break
-        options[choice](data_dict)
+        res = options[choice](data_dict)
         choice = get_choice(options)
