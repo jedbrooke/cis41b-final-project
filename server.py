@@ -21,6 +21,8 @@ class Server():
         The server handles up to MAX_CLIENTS connecting at a time and accepts commands.
         This server runs forever and does not get shut down unless a command to shut down is sent
         """
+        print('Main thread:', threading.get_ident())
+
         threads = []
         self.instructions_queue = queue.Queue()
         self.is_running = True
@@ -37,6 +39,7 @@ class Server():
         db_thread = threading.Thread(target=self.run)
         # db_thread.setDaemon(True)
         db_thread.start()
+        threads.append(db_thread)
         
         with socket.socket() as s:
             s.settimeout(timeout)
@@ -59,12 +62,14 @@ class Server():
                     # print('time out')
                     # break  
         
+        t.join()
         print('exit')             
 
     def run(self):
         """  
         Thread that handles the requests to the db, which in this implementation handles a single instruction thread.
         """
+        print('Run thread:', threading.get_ident())
         self.db = serverdb.SqlDb()
 
         while self.is_running:
@@ -75,8 +80,8 @@ class Server():
                 # print(str(e))
                 pass
 
-        # Close connection with db
-        self.db.__del__()
+        # Close connection with db by deleting the db object
+        del self.db
         print('run ended')
 
     def add_instruction(self,instruction,*args):
