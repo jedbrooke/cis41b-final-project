@@ -15,7 +15,10 @@ PORT = 5551
 class Server():
     MAX_CLIENTS = 4
     def __init__(self, timeout = 60):
-        
+        """
+        The server handles up to MAX_CLIENTS connecting at a time and accepts commands.
+        This server runs forever and does not get shut down.
+        """
         threads = []
         self.instructions_queue = queue.Queue()
         self.is_running = True
@@ -47,15 +50,24 @@ class Server():
                 # break
 
     def run(self):
+        """  
+        Thread that handles the requests to the db, which in this implementation handles a single instruction thread.
+        """
         self.db = serverdb.SqlDb()
         while self.is_running:
             function, args = self.instructions_queue.get()
             self.options[function](*args)
 
     def add_instruction(self,instruction,*args):
+        """ 
+        Adds instructions to the db queue 
+        """
         self.instructions_queue.put((instruction, (*args,)))
 
     def get_client_choice(self, s, conn):
+        """  
+        Get client choice and add to queue
+        """
         while True:
             from_client = pickle.loads(conn.recv(1024))
 
