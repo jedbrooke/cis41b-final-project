@@ -15,10 +15,11 @@ PORT = 5551
 
 class Server():
     MAX_CLIENTS = 4
-    def __init__(self, timeout = 60):
+
+    def __init__(self, timeout = 5):
         """
         The server handles up to MAX_CLIENTS connecting at a time and accepts commands.
-        This server runs forever and does not get shut down.
+        This server runs forever and does not get shut down unless a command to shut down is sent
         """
         threads = []
         self.instructions_queue = queue.Queue()
@@ -37,31 +38,44 @@ class Server():
         db_thread.start()
         
         with socket.socket() as s:
-            try:
-                # Listen for the clients
-                s.bind((HOST, PORT))
-                print("The training session is at:", str(HOST)+":"+str(PORT), 'and will last for', str(timeout), 'seconds.')
-                s.listen()
-
-                for i in range(self.MAX_CLIENTS):
+            s.settimeout(timeout)
+            # Listen for the clients
+            s.bind((HOST, PORT))
+            print("The training session is at:", str(HOST)+":"+str(PORT), 'with an exit timeout of', str(timeout), 'seconds.')
+            s.listen()
+            
+            while self.is_running and self.n_connected_clients <= self.MAX_CLIENTS:
+                try: 
                     (conn, addr) = s.accept()
                     self.n_connected_clients += 1
                     print(addr, 'connected.')
                     t = threading.Thread(target = self.get_client_choice, args = (s, conn))
                     threads.append(t)
                     t.start()
-            except socket.timeout:
-                print('time out')
-                # break                        
+                except socket.timeout:
+                    pass
+                    # print('time out')
+                    # break  
+        
+        print('exit')             
 
     def run(self):
         """  
         Thread that handles the requests to the db, which in this implementation handles a single instruction thread.
         """
         self.db = serverdb.SqlDb()
+
         while self.is_running:
-            function, args = self.instructions_queue.get()
-            self.options[function](*args)
+            try:
+                function, args = self.instructions_queue.get(timeout=1)
+                self.options[function](*args)
+            except queue.Empty:
+                # print(str(e))
+                pass
+                
+        # Close connection with db
+        self.db.__del__()
+        print('run ended')
 
     def add_instruction(self,instruction,*args):
         """ 
@@ -73,14 +87,14 @@ class Server():
         """  
         Get client choice and add to queue
         """
-        while True:
+        while self.is_running:
             from_client = pickle.loads(conn.recv(1024))
 
             if from_client['command'] == 'q':
                 self.n_connected_clients -= 1
                 break
-            # elif from_client['command'] == 'shut_down':
-            #     self.shut_down(conn)
+            elif from_client['command'] == 'shut_down':
+                self.shut_down(conn)
             else:                        
                 self.add_instruction(from_client['command'], from_client, conn)        
 
@@ -155,17 +169,17 @@ class Server():
             conn.send(pickle.dumps(msg))
             print(msg)
     
-    # def shut_down(self, req, conn):
-    #     if self.n_connected_clients <= 1:
-    #         status = True
-    #         self.is_running = False
-    #         conn.send(pickle.dumps(status))
-    #         print('Good bye')
-    #         # quit()
-    #     else:
-    #         status = False
-    #         print('There are', self.n_connected_clients, 'clients still connected.')
-    #         conn.send(pickle.dumps(status))
+    def shut_down(self, conn):
+        if self.n_connected_clients <= 1:
+            status = True
+            self.is_running = False
+            conn.send(pickle.dumps(status))
+            print('Good bye')
+            # quit()
+        else:
+            status = False
+            print('There are', self.n_connected_clients, 'clients still connected.')
+            conn.send(pickle.dumps(status))
 
 if __name__ == "__main__":
     s = Server()
