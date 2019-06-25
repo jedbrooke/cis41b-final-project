@@ -6,9 +6,12 @@ from PIL import ImageTk,Image
 import os
 from io import BytesIO
 
-"""utility functions"""
+
 
 class TagUtility():
+    """TagUtility is a static class that hold some helper and utility functions that aid the Window class in parsing the HTML and beautiful soup data"""
+
+    """Possible Arguments for grid function"""
     GRID_ARGS = {
         "padx":int,
         "pady":int,
@@ -16,12 +19,15 @@ class TagUtility():
         "row":int,
         "column":int,
     }
+
+    """Possible Arguments for listbox tag"""
     LISTBOX_ARGS = {
         "height":int,
         "width":int,
         "selectmode":str,
     }
 
+    """Possible Arguments for button tag"""
     BUTTON_ARGS = {
         "link":str,
         "action":str,
@@ -29,11 +35,13 @@ class TagUtility():
         "title":str
     }
 
+    """Possible Arguments for div (tk.frame) tag"""
     FRAME_ARGS = {
         "height":int,
         "width":int,
     }
 
+    """Dictionary of tag names and their argument lists"""
     ELEMENT_ARGS = {
         "grid":GRID_ARGS,
         "listbox":LISTBOX_ARGS,
@@ -41,19 +49,19 @@ class TagUtility():
         "frame":FRAME_ARGS,
     }
 
-    def __init__(self):
-        pass
-
+    """gets the HTML from a file and returns a Beautiful Soup obejct for parsing"""
     @staticmethod
     def get_html(path):
         file = open(path)
         soup = bs(file,"lxml")
         return soup
 
+    """casting function to cast "true" and "false" to bools"""
     @staticmethod
     def bool_from_str(s):
         return s.lower() == "true"
 
+    """gets the requested attribute, if it exists, from the given bsoup tag"""
     @staticmethod
     def get_attribute(tag,attr,cast=str):
         try:
@@ -63,6 +71,7 @@ class TagUtility():
         except ValueError as e:
             return None
 
+    """returns all the relevant arguments for a given tag and type"""
     @staticmethod
     def get_element_args(tag,element):
         return dict(\
@@ -70,22 +79,28 @@ class TagUtility():
             for arg,kind in TagUtility.ELEMENT_ARGS[element].items()\
             if TagUtility.get_attribute(tag,arg,kind) is not None])
 
+    """returns all the tags related to the grid arguments"""
     @staticmethod
     def get_grid_args(tag):
         return TagUtility.get_element_args(tag,"grid")
 
+    """returns all the tags related to the listbox tag"""
     @staticmethod
     def get_listbox_args(tag):
         return TagUtility.get_element_args(tag,"listbox")
 
+    """returns all the tags related to the button tag"""
     @staticmethod
     def get_button_args(tag):
         return TagUtility.get_element_args(tag,"button")
 
+    """returns all the tags related to the div (tk.frame) tag"""
     @staticmethod
     def get_frame_args(tag):
         return TagUtility.get_element_args(tag,"frame")
 
+    """returns an image in a format that tkinter can use"""
+    """not really related to tags, but still a utility function"""
     @staticmethod
     def get_image(src,target_size=250,mode='path'):
         if mode == "path": 
@@ -100,6 +115,8 @@ class TagUtility():
         return ImageTk.PhotoImage(img_pil)
 
 class Button():
+    """Button Base class, holds attribute for the button such as type and link and parent"""
+    """Other windows will have their own derived versions of Button to hold the callback functions they will need"""
     def __init__(self, link=None, action=None, btype=None, title=None, window=None):
         self.link = link
         self.action = action
@@ -111,17 +128,15 @@ class Button():
         elif action and not btype:
             self.btype = "action"
 
-    #button actions
-    @staticmethod
-    def quit():
-        print("press the red button to close the window")
-
 class Form():
+    """Form Base Class, holds the attributes and fields for the forms"""
+    """Other windows will have their own derived version of the Form class to take the correct actions when the form is submitted"""
     def __init__(self,action=None,window=None):
         self.fields = {}
         self.window = window
 
     def add_field(self,field):
+        """adds a field to the form"""
         self.fields[field.name] = field
         if field.ftype == "for_label":
             var = [f for f in self.fields if f.name == field.data[0]][0]
@@ -137,6 +152,9 @@ class Form():
     def print_all_fields(self):
         print(*self.fields)
 
+    def submit(self):
+        self.print_all_fields()
+
 class Field():
     def __init__(self, ftype, name, data):
         self.ftype = ftype
@@ -146,14 +164,17 @@ class Field():
         return str([self.ftype,self.name,self.data])
 
 class Window():
-    """docstring for Window"""
+    """Window Base class, handles the psarsing of HTML text into tkinter widgets"""
+    """Subclasses of Window will implement their own post() method, which handles some extra initializing of the window and input from forms"""
     client = None
     def __init__(self,soup=None,path=None,main=False,master=None,form=None,button=None,windows=None):
+        """the functions to call for each tag type"""
         self.HEAD_ACTIONS = {
             "title":self.set_title,
             "geometry":self.set_geometry
         }
         
+        """the functions to call for each tag type"""
         self.BODY_ACTIONS = {
             "button":self.create_button,
             "label":self.create_label,
@@ -167,16 +188,23 @@ class Window():
             "option":self.create_option,
         }
 
+        """Dictionary for buttons"""
         self.buttons = {}
+        """If a button class type was passed use that, if not then use the defualt Button"""
         self.button = button if button else Button
+        """List for images, PIL Tkimages will get garbage collected if the last reference goes out of scope so we will keep them here"""
         self.images = []
+        """If a button form type was passed use that, if not then use the defualt Form"""
         self.form_type = form if form else Form
+        """Dictionary for the forms and lists so we can add items to them later"""
         self.frames = {}
+        """Types of windows for linked windows"""
         self.windows = windows
         self.isMain = main
+        """Master is the tk.Tk or tk.Toplevel object that this window is a child to"""
         self.master = master
-
-
+ 
+        """self.win is the toplevel tkinter widget for all the widgets in the window"""
         if main:
             self.win = tk.Tk()
             self.win.protocol("WM_DELETE_WINDOW", self.shut_down)
@@ -185,33 +213,45 @@ class Window():
             self.win.transient(master=master)
             self.win.grab_set()
             self.win.focus_set()
+
+        """have one main frame for all the tkinter widgets to sit in"""
         self.main_frame = tk.Frame(self.win)
-        #self.win.resizable(False,False)
+
+        """if we were given a path and not a soup, get the soup from the file at the path"""
         if soup is None and path is not None:
             _initPath(path)
+        """if we were givel the soup and not a path then we are good to go"""
         elif soup is not None and path is None:
             self.soup = soup
 
+        """If this is the main window, we will initialize it now, otherwise the window will get intialized in its post() method"""
         if main:
             self._initialize()
 
     def start(self):
+        """starts the mainloop"""
         self.win.mainloop()
-        print("mainloop over")
 
     def _initialize(self):
+        """This is where we actually start the process of converting all the HTML tags in the soup to tkinter widgets"""
+
+        """instantiate a new form for the window"""
         self.form = self.form_type(window=self)
+        """Buitld the elements"""
         self.buildElements()
+        """grid the main frame so we can see all the widgets"""
         self.main_frame.grid()
 
     def _initPath(self,path):
+        """get the soup from the file at the path"""
             self.soup = TagUtility.get_html(path)
 
     def shut_down(self):
-        print("quitting in window")
+        """handle the closing of the GUI"""
         self.win.quit()
 
     def post(self):
+        """Default post behavior is to initialize all the elements, this is most likely overridden in derived classes"""
            self._initialize()   
 
     def buildElements(self):
@@ -219,11 +259,13 @@ class Window():
         self.buildBody(self.soup.body,self.main_frame)
 
     def buildHead(self,soup):
+        """Build the header elements, or metadata"""
         for tag in soup:
             if tag.name is not None:
                 self.HEAD_ACTIONS[tag.name](tag)
 
     def buildBody(self,data,container,*args,**kwargs):
+        """build the body elements, or the stuff we actially see"""
         elements = []
         for tag in data:
             if tag.name is not None:
@@ -231,6 +273,7 @@ class Window():
         return elements
 
     def buildList(self,elements,listbox):
+        """accepts the elements for a listbox, and the listbox to add them to, and adds them"""
         l = [item.text for item in elements.find_all("li")]
         listbox.insert(tk.END,*l)
         return l
@@ -243,6 +286,7 @@ class Window():
         self.win.geometry(geometry.text)
 
     def create_label(self,label,parent):
+        """Creates a tk.Label from the html soup"""
         l = tk.Label(parent,text=label.text.strip())
         l.grid(TagUtility.get_grid_args(label))
         if TagUtility.get_attribute(label,"for"):
@@ -258,6 +302,7 @@ class Window():
         return l
 
     def create_button(self,button,parent):
+        """Creates a tk.Button from the html soup"""
         if len(button.find_all("img")) != 0:
             icon = TagUtility.get_image(src=button.find_all("img")[0]["src"],target_size=20)
             b = tk.Button(parent,image=icon,text=button.text.strip(),height=20,width=20)
@@ -270,32 +315,36 @@ class Window():
         return b
 
     def create_frame(self,frame,parent,*args,**kwargs):
+        """Creates a tk.Frame from the html soup, and fill it with widgets"""
         if TagUtility.get_attribute(frame,"scrolling",TagUtility.bool_from_str):
             return self.create_scrollframe(frame,parent,*args,**kwargs)
         else:
-
             tk_frame = tk.Frame(parent)
             elements = self.buildBody(frame,tk_frame,*args,**kwargs)
             tk_frame.grid(TagUtility.get_grid_args(frame))
             frame_id = TagUtility.get_attribute(frame,"id")
             if not frame_id:
+                """if and ID isn't set, get it from the string cast of the tkinter widget"""
                 frame_id = str(tk_frame)
             self.frames[frame_id] = tk_frame
             return (tk_frame,elements)
 
 
     def create_form(self,form,parent):
+        """create a tk.frame for the Form object, and fill it with widgets"""
         form_frame = tk.Frame(parent)
         elements = self.buildBody(form,form_frame)
         form_frame.grid(TagUtility.get_grid_args(form))
         frame_id = TagUtility.get_attribute(form,"id")
         if not frame_id:
+            """if and ID isn't set, get it from the string cast of the tkinter widget"""
             frame_id = str(form_frame)
         self.frames[frame_id] = form_frame
         return (form_frame,elements)
 
 
     def create_listbox(self,listbox,parent,scrolling=False):
+        """Creates a tk.Listbox from the html soup"""
         if TagUtility.get_attribute(listbox,"scrolling",TagUtility.bool_from_str)\
          or scrolling:
             frame = tk.Frame(parent)
@@ -307,6 +356,7 @@ class Window():
 
         list_id = TagUtility.get_attribute(listbox,"id")
         if not list_id:
+            """if and ID isn't set, get it from the string cast of the tkinter widget"""
             list_id = str(tk_listbox)
         self.frames[list_id] = tk_listbox
 
@@ -328,6 +378,7 @@ class Window():
 
             
     def create_scrollframe(self,scrollframe,parent,*args,**kwargs):
+        """Creates a tk.Frame from the html soup with a scrollbar, and fill it with widgets"""
         outer_frame = tk.Frame(parent,relief=tk.GROOVE,bd=1)
         outer_frame.grid(TagUtility.get_grid_args(scrollframe))
 
@@ -354,9 +405,8 @@ class Window():
 
         return (outer_frame,self.buildBody(scrollframe,inner_frame,*args,**kwargs))
 
-    # def create_scrollbox(self,scrollbox,parent,tk_listbox): REMOVED
-
     def create_image(self,tag,parent):
+        """Creates an image from the html soup"""
         src = TagUtility.get_attribute(tag,"src")
         canvas = tk.Canvas(parent)
         canvas.grid()
@@ -365,17 +415,15 @@ class Window():
         self.images.append(img)
         return canvas
 
-
-
-    def on_click(self,event):
-        caller = event.widget
-
     def button_clicked(self,event):
+        """callback function for when buttons are clicked"""
         button = self.buttons[str(event.widget)]
+        """call function corresponding to button type"""
         BUTTON_TYPE_ACTIONS[button.btype](self,button)
         
 
     def back_button(self,button):
+        """Button for going back one window in the UI, closes the current window and puts focus on the previous one"""
         self.master.grab_set()
         self.master.focus_set()
         self.win.destroy()
@@ -384,7 +432,8 @@ class Window():
         self.goto_link(button.link)
 
     def goto_link(self,link,destroy=False,*args,**kwargs):
-        path = f"gui_pages/{link}"
+        """Sends the gui to the next window as denoted by the file in the path for the link"""
+        path = os.path.join("gui_pages",f"{link}")
         print("link clicked:",link)
         if os.path.isfile(path):
             try:
@@ -400,15 +449,18 @@ class Window():
             self.win.destroy()
 
     def button_action(self,button):
+        """if the button is an action type try to execute the function in the Button class"""
         try:
             getattr(button,button.action)()
         except Exception as e:
             print(e)
 
     def create_input(self,input_tag,parent):
+        """Creates an input for a form"""
         return INPUT_TYPE_ACTIONS[TagUtility.get_attribute(input_tag,"type")](self,input_tag,parent)
 
     def create_text_input(self,input_tag,parent):
+        """creates a text input with the necessary tkinter widgets and back end in the Form class"""
         var = tk.StringVar()
         default = TagUtility.get_attribute(input_tag,"default")
         if default:
@@ -419,14 +471,13 @@ class Window():
         return entry
 
     def create_submit_input(self,input_tag,parent):
+        """creates the submit button for Forms"""
         button = tk.Button(parent, command=lambda : self.form.submit(), text="Submit")
         button.grid(TagUtility.get_grid_args(input_tag))
         return button
 
-    def create_radio_input(self,input_tag,parent):
-        pass
-
     def create_select(self,select,parent):
+        """Creates a radio button or checkbutton set, creates tkinter widgets and Form items"""
         multiple = TagUtility.get_attribute(select,"multiple",TagUtility.bool_from_str)
         name = TagUtility.get_attribute(select,"name")
         if multiple:
@@ -439,6 +490,7 @@ class Window():
             self.create_frame(select,parent,variable=tksv,multiple=False)
 
     def create_option(self,option,parent,variable=None,multiple=False,name=None):
+        """Creates an option for the radio or check buttons"""
         value = TagUtility.get_attribute(option,"value")
         text = option.text.strip()
         if not value:
@@ -459,13 +511,16 @@ class Window():
             return (b,self.buildBody(option,parent))
 
     def get_frame_by_id(self,_id):
+        """returns a reference to a frame based on the string ID"""
         return self.frames[_id]
 
     def post(self):
+        """The initialize function, to be overwritten in Base classes, but provides a default behavior of initializing the window"""
         self._initialize()
 
     @staticmethod
     def set_client(_client):
+        """Sets a static reference to the Client obejct so all Windows can interact with the client"""
         Window.client = _client
        
 BUTTON_TYPE_ACTIONS = {

@@ -1,8 +1,13 @@
+"""
+client.py
+Written by Jasper Edbrooke
+client.py has the Client class which handles the back end interactions of the client, including interactions with the database, and network to the server. 
+client.py also houses all the implentations of the GUI Forms, Buttons, and Windows
+"""
 import socket
 from gui_engine import Form, Window, TagUtility, Button, Field
 import threading
 import queue
-import time
 import data
 import tkinter as tk
 import tkinter.filedialog as tkfd
@@ -16,19 +21,13 @@ from tkinter.ttk import Progressbar as Pbar
 SERVER_ADDR = "127.0.0.1"
 SERVER_PORT = 5551
 
-class MainButton(Button):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args,**kwargs)
-
-    @staticmethod
-    def print_hello():
-        print("hello")
-
 class ResultsButton(Button):
+    '''holds the functions for the buttons for the results.html page'''
     def __init__(self, *args, **kwargs):
         super().__init__(*args,**kwargs)
         
     def graph_results(self):
+        '''opens the window that generates and displays the graph of common tags'''
         self.window.goto_link("graph_tags.html",category=self.window.category)
 
     def export_category(self):
@@ -37,11 +36,12 @@ class ResultsButton(Button):
             Window.client.add_instruction("request_export",self.window.category,path)
 
 class SearchForm(Form):
-    """docstring for Form"""
+    """This form handles the user entered string and number to tell the database how many images to download"""
     def __init__(self,*args,**kwargs):
         super().__init__(*args,**kwargs)
 
     def submit(self):
+        """gets the user inputs and passes it to the results window"""
         category = self.get_field("query").data.get()
         number = self.get_field("number").data.get()
         if not Window.client.data_queue.empty(): #if the queue is not empty, then grab the settings from there
@@ -52,25 +52,30 @@ class SearchForm(Form):
         try:
             settings["n"] = int(number)
         except ValueError as e:
+            ## TODO: replace console log with tkmb
             print("invalid number, using default")
         print(settings)
         self.window.goto_link("results.html",category=category,settings=settings)
 
 class ResultsForm(Form):
+    """Results form handles the user selected images and updates the list accordingly"""
     def __init__(self,*args,**kwargs):
         super().__init__(*args,**kwargs)
 
 
     def submit(self):
+        """submits user inputs to database in the form of a list of urls"""
         urls = [image[0][2] for image in self.window.image_data if image[1]]
         Window.client.add_instruction("send_reject_urls_to_db",urls)
         self.window.post()
 
 class SettingsForm(Form):
+    """Handles the search settings that the user can enter to refine their search criteria"""
     def __init__(self,*args,**kwargs):
         super().__init__(*args,**kwargs)
 
     def submit(self):
+        """passes search settings to the client to pass back to the search window"""
         filter_nsfw = self.get_field("filter").data.get()
         blacklist = self.get_field("blacklist").data.get()
         print(filter_nsfw,blacklist)
@@ -79,17 +84,9 @@ class SettingsForm(Form):
         settings["blacklist"] = [tag.strip() for tag in blacklist.split(",")]
         Window.client.data_queue.put(settings)
         self.window.win.destroy()
-        
-class SettingsWindow(Window):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args,**kwargs)
-
-    def post(self):
-        print("calling settings window post")
-        self.form_type = SettingsForm
-        self._initialize()
 
 class ReviewForm(Form):
+    """gets the category the user chose and passes it to the results window"""
     def __init__(self, *args, **kwargs):
         super().__init__(*args,**kwargs)
 
@@ -98,8 +95,18 @@ class ReviewForm(Form):
         print("submit category:",category)
         self.window.goto_link("results.html",category=category)
         
+class SettingsWindow(Window):
+    """This window shows the user the settings they can change on the search parameters"""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args,**kwargs)
+
+    def post(self):
+        print("calling settings window post")
+        self.form_type = SettingsForm
+        self._initialize()
               
 class SearchWindow(Window):
+    """displays for the user search bar and serch options"""
     def __init__(self, *args, **kwargs):
         super().__init__(*args,**kwargs)
 
@@ -112,7 +119,7 @@ class SearchWindow(Window):
         self._initialize()
 
 class ResultsWindow(Window):
-
+    """This window shows the user the images in the category they have chosen, with the option to export the category, view the common tags, or to reject images in the category"""
     def __init__(self, *args, **kwargs):
         super().__init__(*args,**kwargs)
         self.image_size = 250
@@ -121,6 +128,7 @@ class ResultsWindow(Window):
         }
 
     def post(self,category=None,settings=None):
+        """tells database to start downloading images, starts a progress bar while waiting"""
         if category:
             if settings:
                 Window.client.add_instruction("send_query_to_db",category,settings)
@@ -138,6 +146,7 @@ class ResultsWindow(Window):
         t.start()
         
     def get_images(self,category=None,settings=None):
+        """gets the images from the database and puts them in a list to be replayed"""
         if category:
             self.image_data = []
             fetching = True
@@ -160,6 +169,7 @@ class ResultsWindow(Window):
         self.win.after(10,lambda:self.generate_images(initialize))
 
     def generate_images(self,initialize=False):
+        """displays the images from the category that the user has chosen"""
         if initialize:
             self._initialize()
         frame = self.get_frame_by_id("display")
@@ -172,9 +182,12 @@ class ResultsWindow(Window):
         grid_count = 0
         print("creating images")
         for i,image in enumerate(self.image_data):
+            """image[1] is the is_rejected flag"""
             if image[1]:
+                """if it's rejected we skip this image"""
                 continue
             canvas = tk.Canvas(frame)
+            """image[0] is the image, image[0][1] is the blob"""
             img = TagUtility.get_image(image[0][1],self.image_size,"blob")
             canvas.create_image(0,0,anchor=tk.N+tk.W,image=img)
             canvas.grid(row=grid_count//columns,column=grid_count%columns)
@@ -187,17 +200,38 @@ class ResultsWindow(Window):
         frame.update()
 
     def image_selected(self,event):
+        """callback for when an image is clicked, tells the list to reject it and draw a red X on the image to show the user"""
         img_index,grid_index = self.boxes[str(event.widget)]
         self.image_data[img_index][1] = True #set the remove flag to true
         self.display_images[grid_index].create_line(0,0,50,50,fill="red",width=5)
         self.display_images[grid_index].create_line(50,0,0,50,fill="red",width=5)
         self.display_images[grid_index].update()
 
+class ReviewWindow(Window):
+    """Shows user a list of available categories they can choose to reivew images in"""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args,**kwargs)
+
+    def post(self):
+        self.form_type = ReviewForm
+        self.windows = {
+            "results.html":ResultsWindow
+        }
+        self._initialize()
+        tk_listbox = self.get_frame_by_id("categories-list")
+        Window.client.add_instruction("get_categories",None)
+        self.categories = Window.client.data_queue.get()
+        tk_listbox.insert(tk.END,*self.categories)
+        #add the list of categories to the list box
+        self.form.add_field(Field("listbox","categories-list",[tk_listbox,self.categories]))
+
 class PlotWindow(Window):
+    """Shows the graph of common tags for the category"""
     def __init__(self, *args, **kwargs):
         super().__init__(*args,**kwargs)
 
     def post(self,category):
+        """Inintializes the window and the plot graph"""
         self._initialize()
         print("post in PlotWindow")
         Window.client.add_instruction("get_tag_counts",category)
@@ -216,29 +250,13 @@ class PlotWindow(Window):
         canvas.get_tk_widget().grid()
         canvas.draw()
         frame.update()
-   
-class ReviewWindow(Window):    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args,**kwargs)
 
-    def post(self):
-        self.form_type = ReviewForm
-        self.windows = {
-            "results.html":ResultsWindow
-        }
-        self._initialize()
-        tk_listbox = self.get_frame_by_id("categories-list")
-        Window.client.add_instruction("get_categories",None)
-        self.categories = Window.client.data_queue.get()
-        tk_listbox.insert(tk.END,*self.categories)
-        #add the list of categories to the list box
-        self.form.add_field(Field("listbox","categories-list",[tk_listbox,self.categories]))
-
-        
 
 class Client():
     def __init__(self):
         #self.socket = socket.socket()
+
+        #initialize instruction dictionary for db_thread
         self.instructions = {
             "quit":self.quit,
             "initialize_db":self.initialize_db,
@@ -250,23 +268,36 @@ class Client():
             "get_categories":self.get_categories,
             "get_images_from_category":self.get_images_from_category,
         }
+
+        #instructions queue will hold the request from the GUI and tell the db_thread to execute them
         self.instructions_queue = queue.Queue()
         self.instructions_queue.put(("initialize_db",(None,)))
+        #data queue is to pass data between the client/db_thread and the gui thread
         self.data_queue = queue.Queue()
         self.is_running = True
         db_thread = threading.Thread(target=self.run)
         db_thread.start()
+        
+        #prepare the window types for the sub windows
         windows = {
             "search.html":SearchWindow,
             "review.html":ReviewWindow,
         }
 
+        #set the static reference to the client so the gui knows about the client thread
         Window.set_client(self)
+
+        #instantiate the new window
         w = Window(TagUtility.get_html("gui_pages/main.html"),main=True,windows=windows)
+        
+        #start the mainloop in the window, the main thread will be the gui thread from here
         w.start()
 
+
         print("quitting")
+        #tell db_thread to stop
         self.instructions_queue.put(("quit",(None,)))
+        #wait for it to stop
         db_thread.join()
 
         '''
@@ -278,29 +309,15 @@ class Client():
         self.socket.send(pickle.dumps((query,(*args))))
 
     def send_query_to_db(self,q,settings):
-        #images = self.db.get_nimages_with_category()
-        print("querying db")
         print(q,settings)
         self.images = self.db.download_nimages_with_category(q,**settings)
-        #images is a list/generator of the image blobs
-        #pass images ot gui
-        pass
+        #images is a generator of the image blobs and some other info
 
     def send_reject_urls_to_db(self,urls):
         self.db.reject_images(urls)
 
     def request_export(self,category,directory):
         self.db.export_images(category,directory)
-        pass
-
-
-    def recieve_images(self):
-        self.socket.recv()
-        return images
-
-    def recieve_tags(category):
-        self.socket.recv()
-        return tags
 
     def send_train(category):
         self.socket.send()
@@ -318,15 +335,12 @@ class Client():
 
     def quit(self,*args):
         self.is_running = False
-        print("shutting down")
 
     def get_image_from_generator(self,*args):
-        print("getting image")
         try:
             self.data_queue.put(next(self.images))
         except Exception as e:
             self.data_queue.put(False)
-        
         
 
     def get_images_from_category(self,category):
@@ -334,13 +348,9 @@ class Client():
         self.images = self.db.get_images_from_category(category)
 
     def run(self):
-        print("running" if self.is_running else "not running")
         while self.is_running:
-            print("waiting for instructions")
             function,args = self.instructions_queue.get()
-            print("running",function)
             self.instructions[function](*args)
-        print("running finished")
 
     def add_instruction(self,instruction,*args):
         self.instructions_queue.put((instruction,(*args,)))
