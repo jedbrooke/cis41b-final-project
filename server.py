@@ -49,7 +49,7 @@ class Server():
             print("The training session is at:", str(HOST)+":"+str(PORT), 'with an exit timeout of', str(timeout), 'seconds.')
             s.listen()
             
-            while self.is_running and self.n_connected_clients <= self.MAX_CLIENTS:
+            while self.is_running and self.n_connected_clients < self.MAX_CLIENTS:
                 try: 
                     (conn, addr) = s.accept()
                     with self.lock:
