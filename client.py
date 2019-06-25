@@ -18,6 +18,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 from tkinter.ttk import Progressbar as Pbar
 import os
+import select
 
 SERVER_ADDR = "127.0.0.1"
 SERVER_PORT = 5551
@@ -287,8 +288,8 @@ class ServerResponseWindow(Window):
 
     def get_server_response(self):
         print("waiting for data",Window.client.data_queue.empty()) 
-        command,result = Window.client.data_queue.get()
-        self.win.after(10,lambda:self.show_label(command,result))
+        response = Window.client.data_queue.get()
+        self.win.after(10,lambda:self.show_label(*response))
 
 
     responses = {
@@ -296,13 +297,15 @@ class ServerResponseWindow(Window):
         "clear_db":["There was an error clearing the database","Database cleared successfully"],
         "check_if_trainable":["The Dataset you have selected is not trainable","The Dataset you have selected is trainable!"],
         "train":["The Dataset you have selected is not trainable","Training in progress. Please come back in a few hours."],
-        "shut_down":["There are other client on the server, server will not close","Server is shutting down"],
+        "shut_down":["There are other clients on the server, server will not close","Server is shutting down"],
         "connection_lost":["Error: the connection to the server has been lost"]
 
     }
 
-    def show_label(self,command,result):
+    def show_label(self,command,result,*args):
         tk.Label(self.get_frame_by_id("display"),text=ServerResponseWindow.responses[command][result]).grid()
+        if len(args) is not 0:
+            tk.Label(self.get_frame_by_id("display"),text=",".join(args)).grid()
 
 class SelectWindow(Window):
     """Prompts the user to select the categories they want"""
@@ -331,10 +334,11 @@ class SelectForm(Form):
 
     def submit(self):
         choices_list = self.get_field("categories-list").data[1]
-        self.categories = [choices_list[i] for i in self.get_field("categories-list").data[0].curselection()]
+        self.categories = [choices_list[i][0] for i in self.get_field("categories-list").data[0].curselection()]
         urls = []
         tags = []
         #get all the image urls to send
+        print("category is",self.categories)
         for category in self.categories:
             Window.client.add_instruction("get_images_from_category",category)
             fetching = True
@@ -388,6 +392,7 @@ class Client():
         try:
             self.socket = socket.socket()
             self.socket.connect((SERVER_ADDR,SERVER_PORT))
+            self.socket.setblocking(0)
             self.server = True
         except ConnectionRefusedError as e:
             self.server = False
@@ -463,17 +468,23 @@ class Client():
 
             #server returns a boolean based on success or fail
             print("waiting for response from server")
-            response = pickle.loads(self.socket.recv(1024))
+            #lines 472 - 474 borrowed from Stack Overflow https://stackoverflow.com/questions/2719017/how-to-set-timeout-on-pythons-socket-recv-method
+            ready = select.select([self.socket],[],[],10)
+            if ready[0]:
+                response = pickle.loads(self.socket.recv(1024))
+            else:
+                response = (False,)
+                command = "connection_lost"
             print("got response")
-            if command == "shut_down" and response:
+            if (command == "shut_down" and response) or not ready[0]:
                 self.server = False
         else:
-            response = False
+            response = (False,)
             command = "connection_lost"
 
 
         print(response)
-        self.data_queue.put((command,response))
+        self.data_queue.put((command,*response))
     
 
 if __name__ == '__main__':

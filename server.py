@@ -12,6 +12,7 @@ import sys
 
 HOST = 'localhost'
 PORT = 5551
+PACKET_SIZE = 1024
 
 class Server():
     MAX_CLIENTS = 4
@@ -98,7 +99,15 @@ class Server():
             while self.is_running:
 
                 try:
-                    from_client = pickle.loads(conn.recv(1024))
+                    #borrowed lines 102 - 107 from Stack Overflow https://stackoverflow.com/questions/44637809/python-3-6-socket-pickle-data-was-truncated
+                    data = []
+                    while True:
+                        packet = conn.recv(PACKET_SIZE)
+                        print("getting data")
+                        data.append(packet)
+                        if len(packet) < PACKET_SIZE:
+                            break
+                    from_client = pickle.loads(b"".join(data))
                 except EOFError as e:
                     break
                 if from_client['command'][0] == 'q':
@@ -117,6 +126,7 @@ class Server():
         msg = 'Getting data from client'
         # conn.send(pickle.dumps(msg))
         print(msg)
+        print(req['data'])
         urls = req['data'][0]
         tags = req['data'][1]
 
@@ -124,10 +134,12 @@ class Server():
         msg = 'downloading to db'
         # conn.send(pickle.dumps(msg))
         print(msg)
+        try:
+            conn.send(pickle.dumps((True,)))
+        except Exception as e:
+            print("client has left")
         for url, tag in zip(urls, tags):
-            self.db.add_to_db(url, tag)  
-
-        conn.send(pickle.dumps(True))
+            self.db.add_to_db(url, tag)
 
 
     def clear_db(self, req, conn):
@@ -141,7 +153,10 @@ class Server():
         msg = 'DB reset successful.'
         # conn.send(pickle.dumps(msg))
         print(msg)
-        conn.send(pickle.dumps(True))
+        try:
+            conn.send(pickle.dumps((True,)))
+        except Exception as e:
+            print("client has left")
 
     def check_db_for_training(self, req, conn):
         """  
@@ -169,7 +184,11 @@ class Server():
             # conn.send(pickle.dumps(msg))
             ready = True
         print(msg)
-        conn.send(pickle.dumps(ready))
+        try:
+            conn.send(pickle.dumps((ready,msg)))
+        except Exception as e:
+            print("client has left")
+        
 
     def train_network(self, req, conn):
         """  
@@ -184,7 +203,10 @@ class Server():
             # conn.send(pickle.dumps(msg))
             ready = False
         print(msg)
-        return ready
+        try:
+            conn.send(pickle.dumps((ready,msg)))
+        except Exception as e:
+            print("client has left")
     
     def shut_down(self, conn):
         if self.n_connected_clients <= 1:
@@ -196,7 +218,10 @@ class Server():
             status = False
             print('There are', self.n_connected_clients, 'clients still connected.')
 
-        conn.send(pickle.dumps(status))
+        try:
+            conn.send(pickle.dumps((status,)))
+        except Exception as e:
+            print("client has left")
 
 if __name__ == "__main__":
     s = Server()
