@@ -1,3 +1,9 @@
+"""
+gui_engine.py
+Written by Jasper Edbrooke
+gui_engine.py contains the Form, Window, TagUtility, Button, and Field classes.
+"""
+
 from bs4 import BeautifulSoup as bs
 import tkinter as tk
 from tkinter import Canvas
