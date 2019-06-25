@@ -17,6 +17,7 @@ mpl.use('TkAgg') # tell matplotlib to work with Tkinter
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 from tkinter.ttk import Progressbar as Pbar
+from tkinter import messagebox as tkmb
 import os
 import select
 
@@ -62,11 +63,11 @@ class SearchForm(Form):
         print(category,number)
         try:
             settings["n"] = int(number)
+            self.window.goto_link("results.html",category=category,settings=settings)
         except ValueError as e:
-            ## TODO: replace console log with tkmb
+            tkmb.showerror(title="Error, invalid input", message=f"Error, please enter an integer for the number")
             print("invalid number, using default")
-        print(settings)
-        self.window.goto_link("results.html",category=category,settings=settings)
+        
 
 class ResultsForm(Form):
     """Results form handles the user selected images and updates the list accordingly"""
