@@ -14,4 +14,6 @@ Images can be rejected in the image review window by clicking on them. `Show com
 
 The main window also allows the user to review images by tag by clicking on `Review Images`.
 
-After other categories have been downloaded and reviewed, the images can be sent to the 'remote' server for training. There are options there to send the image urls over for the server to download the full sized versions of the images. The remote server can be reset to clear all the tables. There are options to check if the database has enough data to start training and to start training. If allowable, the remote server can be shut down if there are no other users connected.
+After other categories have been downloaded and reviewed, the images can be sent to the 'remote' server for training. There are options there to send the image urls over for the server to download the full sized versions of the images. The remote server can be reset to clear all the tables. There are options to check if the database has enough data to start training and to start training. If allowable, the remote server can be shut down if there are no other users connected. The remote server can be started by runnning `server.py`.
+
+The local database can be reset by deleting the db file.
