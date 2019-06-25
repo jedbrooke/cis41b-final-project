@@ -7,3 +7,4 @@ __pycache__/
 gui_pages/.DS_Store
 .DS_Store
 __pycache__/gui_engine.cpython-37.pyc
+*.pyc

@@ -217,11 +217,11 @@ class Window():
         """have one main frame for all the tkinter widgets to sit in"""
         self.main_frame = tk.Frame(self.win)
 
-        """if we were given a path and not a soup, get the soup from the file at the path"""
         if soup is None and path is not None:
+            #if we were given a path and not a soup, get the soup from the file at the path
             _initPath(path)
-        """if we were givel the soup and not a path then we are good to go"""
         elif soup is not None and path is None:
+            # if we were givel the soup and not a path then we are good to go
             self.soup = soup
 
         """If this is the main window, we will initialize it now, otherwise the window will get intialized in its post() method"""
@@ -243,16 +243,16 @@ class Window():
         self.main_frame.grid()
 
     def _initPath(self,path):
-        """get the soup from the file at the path"""
-            self.soup = TagUtility.get_html(path)
+        # get the soup from the file at the path
+        self.soup = TagUtility.get_html(path)
 
     def shut_down(self):
         """handle the closing of the GUI"""
         self.win.quit()
 
     def post(self):
-        """Default post behavior is to initialize all the elements, this is most likely overridden in derived classes"""
-           self._initialize()   
+        # Default post behavior is to initialize all the elements, this is most likely overridden in derived classes
+        self._initialize()   
 
     def buildElements(self):
         self.buildHead(self.soup.head)
@@ -531,6 +531,5 @@ BUTTON_TYPE_ACTIONS = {
 
 INPUT_TYPE_ACTIONS = {
     "text":Window.create_text_input,
-    "radio":Window.create_radio_input,
     "submit":Window.create_submit_input,
 }
