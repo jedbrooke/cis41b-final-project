@@ -1,5 +1,5 @@
 """ 
-Tung X. Dao and Jasper Edbrooke
+Tung X. Dao
 data.py handles the file storage and retrieval for the GUI
 """
 import sqlite3

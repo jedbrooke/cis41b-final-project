@@ -1,5 +1,5 @@
 """ 
-Tung X. Dao
+Tung X. Dao and Jasper Edbrooke
 This server handles database checking and downloading of the large full sized files
 """
 
