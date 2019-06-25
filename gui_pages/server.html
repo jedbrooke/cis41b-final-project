@@ -4,10 +4,16 @@
 	<title>Server Menu</title>
 </head>
 <body>
-	<label>Train a network</label>
-	<button>Train!</button>
-	<label>Clear Databse</label>
-	<button>Clear</button>
-	<label></label>
+	<label>Send Images to server:</label>
+	<button link="select.html">Send</button>
+	<label>Clear Databse:</label>
+	<button action="send_command" args="clear_db">Clear</button>
+	<label>Check if data is trainable:</label>
+	<button action="send_command" args="check_if_trainable">Check</button>
+	<label>Train a network:</label>
+	<button action="send_command" args="train">Train!</button>
+	<label>Shut Down Server:</label>
+	<button action="send_command" args="shut_down">Shut down</button>
+	<button btype="back" pady=15>back</button>
 </body>
 </html>

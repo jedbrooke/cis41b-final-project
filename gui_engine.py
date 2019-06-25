@@ -38,7 +38,8 @@ class TagUtility():
         "link":str,
         "action":str,
         "btype":str,
-        "title":str
+        "title":str,
+        "args":str,
     }
 
     """Possible Arguments for div (tk.frame) tag"""
@@ -123,12 +124,13 @@ class TagUtility():
 class Button():
     """Button Base class, holds attribute for the button such as type and link and parent"""
     """Other windows will have their own derived versions of Button to hold the callback functions they will need"""
-    def __init__(self, link=None, action=None, btype=None, title=None, window=None):
+    def __init__(self, link=None, action=None, btype=None, title=None, window=None,args=None):
         self.link = link
         self.action = action
         self.btype = btype
         self.title = title
         self.window = window
+        self.args = args
         if link and not btype:
             self.btype = "link"
         elif action and not btype:
@@ -435,9 +437,9 @@ class Window():
         self.win.destroy()
 
     def link_clicked(self,button):
-        self.goto_link(button.link)
+        self.goto_link(button.link,button.args)
 
-    def goto_link(self,link,destroy=False,*args,**kwargs):
+    def goto_link(self,link,*args,**kwargs):
         """Sends the gui to the next window as denoted by the file in the path for the link"""
         path = os.path.join("gui_pages",f"{link}")
         print("link clicked:",link)
@@ -451,13 +453,11 @@ class Window():
 
         else :
             tkmb.showerror(title="Page not Found", message=f"Error: \"{path}\" does not exist!")
-        if destroy:
-            self.win.destroy()
 
     def button_action(self,button):
         """if the button is an action type try to execute the function in the Button class"""
         try:
-            getattr(button,button.action)()
+            getattr(button,button.action)(button.args)
         except Exception as e:
             print(e)
 

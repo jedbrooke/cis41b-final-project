@@ -17,6 +17,7 @@ mpl.use('TkAgg') # tell matplotlib to work with Tkinter
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 from tkinter.ttk import Progressbar as Pbar
+import os
 
 SERVER_ADDR = "127.0.0.1"
 SERVER_PORT = 5551
@@ -34,6 +35,15 @@ class ResultsButton(Button):
         path = tkfd.askdirectory(parent=self.window.win)
         if path:
             Window.client.add_instruction("request_export",self.window.category,path)
+
+class ServerButton(Button):
+    """ServerButton holds the actions for the server menu buttons"""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args,**kwargs)
+
+    def send_command(self,command):
+        Window.client.add_instruction("send_command_to_server",command)
+        self.window.goto_link("server_response.html")
 
 class SearchForm(Form):
     """This form handles the user entered string and number to tell the database how many images to download"""
@@ -92,7 +102,6 @@ class ReviewForm(Form):
 
     def submit(self):
         category = self.window.categories[self.get_field("categories-list").data[0].curselection()[0]][0]
-        print("submit category:",category)
         self.window.goto_link("results.html",category=category)
         
 class SettingsWindow(Window):
@@ -251,11 +260,99 @@ class PlotWindow(Window):
         canvas.draw()
         frame.update()
 
+class ServerWindow(Window):
+    """Server window is a menu for the interactions with the server"""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args,**kwargs)
+
+    def post(self,*args):
+        self.button = ServerButton
+        self.windows = {
+            "select.html":SelectWindow,
+            "server_response.html":ServerResponseWindow,
+        }
+        self._initialize()
+
+class ServerResponseWindow(Window):
+    """Displays the server's response to the user in the gui"""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args,**kwargs)
+
+    
+    def post(self):
+        print("initializing response window")
+        self._initialize()
+        threading.Thread(target=self.get_server_response).start()
+        
+
+    def get_server_response(self):
+        print("waiting for data",Window.client.data_queue.empty()) 
+        command,result = Window.client.data_queue.get()
+        self.win.after(10,lambda:self.show_label(command,result))
+
+
+    responses = {
+        "send_data":["There was an error processing the data","Data sent successfully",],
+        "clear_db":["There was an error clearing the database","Database cleared successfully"],
+        "check_if_trainable":["The Dataset you have selected is not trainable","The Dataset you have selected is trainable!"],
+        "train":["The Dataset you have selected is not trainable","Training in progress. Please come back in a few hours."],
+        "shut_down":["There are other client on the server, server will not close","Server is shutting down"],
+        "connection_lost":["Error: the connection to the server has been lost"]
+
+    }
+
+    def show_label(self,command,result):
+        tk.Label(self.get_frame_by_id("display"),text=ServerResponseWindow.responses[command][result]).grid()
+
+class SelectWindow(Window):
+    """Prompts the user to select the categories they want"""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args,**kwargs)
+
+    def post(self,*args):
+        self.form_type = SelectForm
+        self.windows = {
+            "server_response.html":ServerResponseWindow
+        }
+        self._initialize()
+        tk_listbox = self.get_frame_by_id("categories-list")
+        Window.client.add_instruction("get_categories",None)
+        self.categories = Window.client.data_queue.get()
+        tk_listbox.insert(tk.END,*self.categories)
+        #add the list of categories to the list box
+        self.form.add_field(Field("listbox","categories-list",[tk_listbox,self.categories]))
+
+class SelectForm(Form):
+    """gets the categories that the user selects and sends them to the server"""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args,**kwargs)
+
+
+
+    def submit(self):
+        choices_list = self.get_field("categories-list").data[1]
+        self.categories = [choices_list[i] for i in self.get_field("categories-list").data[0].curselection()]
+        urls = []
+        tags = []
+        #get all the image urls to send
+        for category in self.categories:
+            Window.client.add_instruction("get_images_from_category",category)
+            fetching = True
+            while fetching:
+                Window.client.add_instruction("get_image_from_generator",None)
+                image = Window.client.data_queue.get()
+                if not image:
+                    fetching = False
+                    continue
+                urls.append(image[2])
+                tags.append(category)
+
+        Window.client.add_instruction("send_command_to_server","send_data",(urls,tags))
+        self.window.goto_link("server_response.html") 
+        
 
 class Client():
     def __init__(self):
-        #self.socket = socket.socket()
-
         #initialize instruction dictionary for db_thread
         self.instructions = {
             "quit":self.quit,
@@ -267,6 +364,7 @@ class Client():
             "send_reject_urls_to_db":self.send_reject_urls_to_db,
             "get_categories":self.get_categories,
             "get_images_from_category":self.get_images_from_category,
+            "send_command_to_server":self.send_command_to_server
         }
 
         #instructions queue will hold the request from the GUI and tell the db_thread to execute them
@@ -282,13 +380,21 @@ class Client():
         windows = {
             "search.html":SearchWindow,
             "review.html":ReviewWindow,
+            "server.html":ServerWindow,
         }
 
         #set the static reference to the client so the gui knows about the client thread
         Window.set_client(self)
-
+        try:
+            self.socket = socket.socket()
+            self.socket.connect((SERVER_ADDR,SERVER_PORT))
+            self.server = True
+        except ConnectionRefusedError as e:
+            self.server = False
         #instantiate the new window
-        w = Window(TagUtility.get_html("gui_pages/main.html"),main=True,windows=windows)
+        start_page = "main.html" if self.server else "main_no_server.html"
+        path = os.path.join("gui_pages",start_page)
+        w = Window(TagUtility.get_html(path),main=True,windows=windows)
         
         #start the mainloop in the window, the main thread will be the gui thread from here
         w.start()
@@ -299,11 +405,7 @@ class Client():
         self.instructions_queue.put(("quit",(None,)))
         #wait for it to stop
         db_thread.join()
-
-        '''
-        with self.socket:
-             self.socket.connect((SERVER_ADDR,SERVER_PORT))
-        '''
+        self.socket.close()
 
     def send_query_to_server(self,query,*args):
         self.socket.send(pickle.dumps((query,(*args))))
@@ -318,11 +420,6 @@ class Client():
 
     def request_export(self,category,directory):
         self.db.export_images(category,directory)
-
-    def send_train(category):
-        self.socket.send()
-        self.socket.recv()
-        return data
 
     def get_tag_counts(self,category=None):
         self.data_queue.put(self.db.get_count_of_tags(category))
@@ -342,7 +439,6 @@ class Client():
         except Exception as e:
             self.data_queue.put(False)
         
-
     def get_images_from_category(self,category):
         print(category)
         self.images = self.db.get_images_from_category(category)
@@ -354,6 +450,30 @@ class Client():
 
     def add_instruction(self,instruction,*args):
         self.instructions_queue.put((instruction,(*args,)))
+
+    #network functions:
+    def send_command_to_server(self,command,data=None):
+        if self.server:
+            data_dict = {"command": command}
+
+            if data is not None:
+                data_dict["data"] = data
+
+            self.socket.send(pickle.dumps(data_dict))
+
+            #server returns a boolean based on success or fail
+            print("waiting for response from server")
+            response = pickle.loads(self.socket.recv(1024))
+            print("got response")
+            if command == "shut_down" and response:
+                self.server = False
+        else:
+            response = False
+            command = "connection_lost"
+
+
+        print(response)
+        self.data_queue.put((command,response))
     
 
 if __name__ == '__main__':

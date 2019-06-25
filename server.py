@@ -94,46 +94,54 @@ class Server():
         """  
         Get client choice and add to queue
         """
-        while self.is_running:
-            from_client = pickle.loads(conn.recv(1024))
+        with conn:
+            while self.is_running:
 
-            if from_client['command'] == 'q':
-                with self.lock:
-                    self.n_connected_clients -= 1
-                break
-            elif from_client['command'] == 'shut_down':
-                self.shut_down(conn)
-            else:                        
-                self.add_instruction(from_client['command'], from_client, conn)        
+                try:
+                    from_client = pickle.loads(conn.recv(1024))
+                except EOFError as e:
+                    break
+                if from_client['command'][0] == 'q':
+                    break
+                elif from_client['command'] == 'shut_down':
+                    self.shut_down(conn)
+                else:                        
+                    self.add_instruction(from_client['command'], from_client, conn)
+        with self.lock:
+            self.n_connected_clients -= 1
 
     def get_data_from_client(self, req, conn):
         """  
         Gets the information of which files to download from client
         """
         msg = 'Getting data from client'
-        conn.send(pickle.dumps(msg))
+        # conn.send(pickle.dumps(msg))
         print(msg)
         urls = req['data'][0]
         tags = req['data'][1]
 
         # download and add urls and tags to DB
         msg = 'downloading to db'
-        conn.send(pickle.dumps(msg))
+        # conn.send(pickle.dumps(msg))
         print(msg)
         for url, tag in zip(urls, tags):
-            self.db.add_to_db(url, tag)        
+            self.db.add_to_db(url, tag)  
+
+        conn.send(pickle.dumps(True))
+
 
     def clear_db(self, req, conn):
         """  
         Resets the db
         """
         msg = 'Restting db.'
-        conn.send(pickle.dumps(msg))
+        # conn.send(pickle.dumps(msg))
         print(msg)
         self.db.create_db()
         msg = 'DB reset successful.'
-        conn.send(pickle.dumps(msg))
+        # conn.send(pickle.dumps(msg))
         print(msg)
+        conn.send(pickle.dumps(True))
 
     def check_db_for_training(self, req, conn):
         """  
@@ -146,23 +154,22 @@ class Server():
         ready = False
         if n_categories < 2 and n_images < 10:
             msg = 'DB needs more categories and images'
-            conn.send(pickle.dumps(msg))
-            print(msg)
+            # conn.send(pickle.dumps(msg))
+            ready = False
         elif n_images < 10: # Check this n_images condition
             msg = 'DB needs more images'
-            conn.send(pickle.dumps(msg))
-            print(msg)
+            # conn.send(pickle.dumps(msg))
+            ready = False
         elif n_categories < 2:
             msg = 'DB needs more categories'
-            conn.send(pickle.dumps(msg))
-            print(msg)
+            # conn.send(pickle.dumps(msg))
+            ready = False
         else:
             msg = 'DB is good to go'
-            conn.send(pickle.dumps(msg))
-            print(msg)
+            # conn.send(pickle.dumps(msg))
             ready = True
-
-        return ready
+        print(msg)
+        conn.send(pickle.dumps(ready))
 
     def train_network(self, req, conn):
         """  
@@ -170,24 +177,26 @@ class Server():
         """
         if self.check_db_for_training(req, conn):
             msg = 'Training in progress. Please come back in a few hours.'
-            conn.send(pickle.dumps(msg))
-            print(msg)
+            # conn.send(pickle.dumps(msg))
+            ready = True
         else:
             msg = 'Not enough data available. Please run db check.'
-            conn.send(pickle.dumps(msg))
-            print(msg)
+            # conn.send(pickle.dumps(msg))
+            ready = False
+        print(msg)
+        return ready
     
     def shut_down(self, conn):
         if self.n_connected_clients <= 1:
             status = True
             self.is_running = False
-            conn.send(pickle.dumps(status))
             print('Good bye')
             # quit()
         else:
             status = False
             print('There are', self.n_connected_clients, 'clients still connected.')
-            conn.send(pickle.dumps(status))
+
+        conn.send(pickle.dumps(status))
 
 if __name__ == "__main__":
     s = Server()

@@ -205,7 +205,7 @@ class SqlDb():
         self.conn = sqlite3.connect(self.DB_NAME) # pylint: disable=maybe-no-member
         self.cur = self.conn.cursor()   
 
-        tables = ['Images', 'Image_Categories', 'Categories']
+        tables = ['Images', 'Image_Categories', 'Categories','Filetypes']
 
         for table in tables:
             # self.cur.execute('DROP TABLE IF EXISTS ?', (table,)) # Why does this not work?
