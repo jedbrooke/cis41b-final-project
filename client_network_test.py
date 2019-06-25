@@ -1,3 +1,7 @@
+"""  
+Tung X. Dao
+Used to test the server
+"""
 import socket
 import socket
 import pickle
