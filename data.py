@@ -163,7 +163,10 @@ class SqlDb():
                                 FROM Categories c JOIN Image_Categories ic ON c.id = ic.category_id 
                                 GROUP BY ic.category_id;''').fetchall()
         else: 
-            return self.cur.execute('SELECT category FROM Categories;').fetchall()
+            return self.cur.execute('''SELECT c.category
+                                FROM Categories c JOIN Image_Categories ic ON c.id = ic.category_id 
+                                GROUP BY ic.category_id
+                                ORDER BY COUNT(ic.category_id) DESC;''').fetchall()
 
     def delete_images(self, img_urls):
         """ 
