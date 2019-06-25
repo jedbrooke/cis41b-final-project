@@ -10,7 +10,7 @@ Our application allows the user to gather images locally by tag or category, cle
 # GUI Usage
 To start, run `client.py`. Click on `Search` to open a window to query images. Enter a search string and a number of images to download. A thumbnail version will be downloaded locally. To filter images, click on the `settings` button to enable or disable the NSFW filter or include blacklist tags. Blacklist tags will prevent an image with that tag from being downloaded. For example, if images of cats with dogs show up in your `cats` query and you don't want dogs, put `dogs` into the blacklist. Hit `Submit` to get images. This will open the image review window.
 
-Images can be rejected in the image review window by clicking on them. `Show common tags` will show a list of common tags that are also associated with the current selection of images. `Export Category` will export the images from the database into the local hard drive. Clicking on submit will put the current images into the db and reject those that have been selected.
+Images can be rejected in the image review window by clicking on them. `Show common tags` will show a list of common tags that are also associated with the current selection of images. `Export Category` will export the images from the database into the local hard drive. Clicking on submit will put the current images into the db and reject those that have been selected. To undo a selection, click cancel, choose the category again, and then make the selections.
 
 The main window also allows the user to review images by tag by clicking on `Review Images`.
 
@@ -25,7 +25,7 @@ There are three important files in the project.
 
 `data.py` handles the database and downloading of images to the database.
 
-`server.py` launches an instance of the remote server that the client can connect to for the hypothetical training.
+`server.py` launches an instance of the remote server that the client can connect to for the hypothetical training. To enable the client to connect to the server, launch this file first, then launch the client.
 
 
 `images.db` gets created when no such database exists. It stores the local thumbnail versions of the images and the metadata associated with each image.
