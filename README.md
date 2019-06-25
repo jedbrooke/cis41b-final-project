@@ -32,7 +32,7 @@ There are three important files in the project.
 
 `serverimages.db` gets created on the 'server' and stores the full size image files.
 
-Miscellaneous test files were written to test the main files.
+Miscellaneous test files were written to test the main files, and will not be detailed here.
 
 # Slides
 The slides are available at https://docs.google.com/presentation/d/1VjEZNSGiX5WQ7owbERmVV7ALdXEMj2wZPv9BFNmggck/edit?usp=sharing
