@@ -459,8 +459,12 @@ class Window():
 
     def button_action(self,button):
         """if the button is an action type try to execute the function in the Button class"""
+
         try:
-            getattr(button,button.action)(button.args)
+            if button.args:
+                getattr(button,button.action)(button.args)
+            else:
+                getattr(button,button.action)()
         except Exception as e:
             print(e)
 
