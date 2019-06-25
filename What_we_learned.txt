@@ -1,0 +1,10 @@
+Tung:
+I learned a lot from this project. I learned how to implement a SQL database for a real world application. 
+The sample database we used in the 64B class wasn't the most exciting one, so to see one get created and 
+populated was a joy. A lot was learnedfrom using GitHub for version control. There were many new concepts 
+that, again, got to see real world application, and a team project is a great place to have it happen. 
+GUI programming was a strange concept at the begining of the quarter, but taking part in a project that
+involved a GUI helped me expand my skillsets beyond that of a backend programmer. 
+
+Jasper:
+In this project I learned a lot about multithreading, and the importance of blocking vs nonblocking. For example during the potentially long process of downloading images, it was important that the GUI thread was not blocked by the database actions. I got around this by having one thread for the gui and one thread for the database. I also learned more about git, version control, and all that stuff. Also the importance of documenting your code. For the dynamic gui I ended up with a framework, on top of which I still had to build my own classes. Making comments in the code and examples for myself really helped me use this approach to make the gui.
