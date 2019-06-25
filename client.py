@@ -265,7 +265,7 @@ class ServerWindow(Window):
     def __init__(self, *args, **kwargs):
         super().__init__(*args,**kwargs)
 
-    def post(self,*args):
+    def post(self):
         self.button = ServerButton
         self.windows = {
             "select.html":SelectWindow,

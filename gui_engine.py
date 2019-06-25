@@ -437,7 +437,10 @@ class Window():
         self.win.destroy()
 
     def link_clicked(self,button):
-        self.goto_link(button.link,button.args)
+        if button.args:
+            self.goto_link(button.link,button.args)
+        else:
+            self.goto_link(button.link)
 
     def goto_link(self,link,*args,**kwargs):
         """Sends the gui to the next window as denoted by the file in the path for the link"""

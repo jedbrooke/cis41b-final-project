@@ -1,5 +1,5 @@
 """ 
-Tung X. Dao and Jasper Edbrooke
+Tung X. Dao
 data.py handles the file storage and retrieval for the GUI
 """
 import sqlite3
@@ -35,14 +35,25 @@ class SqlDb():
         image is an image binary
         """
         try:
+            # Insert filetype
             self.cur.execute('''INSERT INTO  Filetypes (filetype) VALUES (?) ''', (metadata['filetype'],))
+
+            # Insert Categories
             self.cur.executemany('''INSERT INTO  Categories (category) VALUES (?) ''', metadata['categories'])
-            self.cur.execute('''INSERT INTO  Images (file, url, nsfw, sizetype) VALUES (?, ?, ?, ?); ''', (image, metadata['url'], metadata['nsfw'], metadata['sizetype']))
+
+            # Insert image and metadata
+            self.cur.execute('''INSERT INTO  Images (file, url, nsfw, sizetype, reject) VALUES (?, ?, ?, ?, ?); ''', (image, metadata['url'], metadata['nsfw'], metadata['sizetype'], 0))
+
+            # Get filetype and category ids
+            filetype_id = self.cur.execute('''SELECT id FROM Filetypes WHERE filetype = (?)''', (metadata['filetype'],)).fetchone()[0]
+            self.cur.execute('''UPDATE Images SET filetype = ? WHERE url = ?''', (filetype_id, metadata['url']))
+
             img_id = self.cur.execute('''SELECT id FROM Images WHERE url = (?)''', (metadata['url'],)).fetchone()[0]
             sql_stmt = '''SELECT id FROM Categories WHERE category in ({})'''.format(','.join(['?']*len(metadata['categories'])))
             args = [i[0] for i in metadata['categories']]
             img_cat_list = [(img_id, i[0]) for i in self.cur.execute(sql_stmt, args).fetchall()]
             self.cur.executemany('''INSERT INTO  Image_Categories (img_id, category_id) VALUES (?, ?) ''', img_cat_list)
+
             self.conn.commit() ## Is there overhead for doing this a lot?
         except sqlite3.OperationalError as e: # pylint: disable=maybe-no-member
             print(str(e))
@@ -59,20 +70,31 @@ class SqlDb():
 
         page_no = 0
         i = 1
+
         while i < n:
             headers = {'Authorization': 'Client-ID ' + self.CLIENT}
             url = 'https://api.imgur.com/3/gallery/search/top/all/{}?q={} ext: jpg NOT album'.format(page_no, category)
             response = requests.request('GET', url, headers = headers)
             data = json.loads(response.text)
             data = data['data']
+
+            if not data:
+                print('no results found')
+                return False
             
             for image in data:
                 # Reject albums
                 if image['link'][-3:] != 'jpg':
                     continue
 
+                # Reject NSFW if flag
                 if image['nsfw'] and filter_nsfw:
                     print('Skipping NSFW Image')
+                    continue
+
+                # Skip image if already in db
+                if self.cur.execute('SELECT EXISTS(SELECT 1 from Images WHERE url = ?)', (image['link'],)).fetchone()[0]:
+                    print('Image in DB already.')
                     continue
 
                 album_categories = [(i['name'],) for i in image['tags']] 
@@ -85,8 +107,9 @@ class SqlDb():
                     continue
 
                 url = image['link']
-                page = requests.get(url)
-                metadata = {'url': url, 'nsfw': image['nsfw'], 'filetype': image['link'][-3:], 'sizetype': None, 'categories': album_categories, 'reject': 0}
+                url_thumb = url[:-4] + 'm' + url[-4:]
+                page = requests.get(url_thumb)
+                metadata = {'url': url, 'nsfw': image['nsfw'], 'filetype': image['link'][-3:], 'sizetype': 'm', 'categories': album_categories, 'reject': 0}
                 
                 # # Sometimes an album won't get tagged, but will show up in the title, force the category
                 # if metadata['categories'] == []:
@@ -117,7 +140,7 @@ class SqlDb():
         while True:
             results = self.cur.execute('''SELECT * FROM Images i JOIN Image_Categories ic ON i.id = ic.img_id
                                             JOIN Categories c ON ic.category_id = c.id 
-                                            WHERE c.category = ?''', (category,)).fetchall()
+                                            WHERE c.category = ? AND IFNULL(i.reject, 0) = 0''', (category,)).fetchall()
             if results:
                 for result in results:
                     yield result
@@ -158,11 +181,15 @@ class SqlDb():
         Returns a list of all the categories on the db (also count of each category)
         """
         if count:
-            return self.cur.execute('''SELECT c.category, COUNT(ic.category_id) 
+            return self.cur.execute('''SELECT c.category, COUNT(ic.category_id) AS category_count
                                 FROM Categories c JOIN Image_Categories ic ON c.id = ic.category_id 
-                                GROUP BY ic.category_id;''').fetchall()
+                                GROUP BY ic.category_id
+                                ORDER BY category_count;''').fetchall()
         else: 
-            return self.cur.execute('SELECT category FROM Categories;').fetchall()
+            return self.cur.execute('''SELECT c.category
+                                FROM Categories c JOIN Image_Categories ic ON c.id = ic.category_id 
+                                GROUP BY ic.category_id
+                                ORDER BY COUNT(ic.category_id) DESC;''').fetchall()
 
     def delete_images(self, img_urls):
         """ 
@@ -254,6 +281,9 @@ class SqlDb():
 
 if __name__ == "__main__":
     db = SqlDb()
+    category = 'de anza student'
+    gen = db.download_nimages_with_category(category, 10, filter_nsfw=True, blacklist=['aww'])
+
     category = 'dogs'
     gen = db.download_nimages_with_category(category, 10, filter_nsfw=True, blacklist=['aww'])
 
