@@ -44,7 +44,6 @@ class SqlDb():
             img_cat_list = [(img_id, i[0]) for i in self.cur.execute(sql_stmt, args).fetchall()]
             self.cur.executemany('''INSERT INTO  Image_Categories (img_id, category_id) VALUES (?, ?) ''', img_cat_list)
             self.conn.commit() ## Is there overhead for doing this a lot?
-
         except sqlite3.OperationalError as e: # pylint: disable=maybe-no-member
             print(str(e))
             return e
