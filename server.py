@@ -117,6 +117,7 @@ class Server():
                 else:                        
                     self.add_instruction(from_client['command'], from_client, conn)
         with self.lock:
+            print('client disconnected')
             self.n_connected_clients -= 1
 
     def get_data_from_client(self, req, conn):
@@ -188,7 +189,8 @@ class Server():
             conn.send(pickle.dumps((ready,msg)))
         except Exception as e:
             print("client has left")
-        
+
+        return ready        
 
     def train_network(self, req, conn):
         """  
