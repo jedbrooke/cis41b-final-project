@@ -21,16 +21,13 @@ The local database can be reset by deleting the db file.
 # Files
 There are three important files in the project.
 
-`client.py` launches the GUI and is the main entry point for the application.
+* `client.py` launches the GUI and is the main entry point for the application.
+* `data.py` handles the database and downloading of images to the database.
+* `server.py` launches an instance of the remote server that the client can connect to for the hypothetical training. To enable the client to connect to the server, launch an instance of the server first, then launch the client.
 
-`data.py` handles the database and downloading of images to the database.
-
-`server.py` launches an instance of the remote server that the client can connect to for the hypothetical training. To enable the client to connect to the server, launch an instance of the server first, then launch the client.
-
-
-`images.db` gets created when no such database exists. It stores the local thumbnail versions of the images and the metadata associated with each image.
-
-`serverimages.db` gets created on the 'server' and stores the full size image files.
+Two database files can get generated:
+* `images.db` gets created when no such database exists. It stores the local thumbnail versions of the images and the metadata associated with each image.
+* `serverimages.db` gets created on the 'server' and stores the full size image files.
 
 Miscellaneous test files were written to test the main files, and will not be detailed here.
 
