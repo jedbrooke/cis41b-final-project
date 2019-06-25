@@ -1,0 +1,9 @@
+Tung:
+I learned a lot from this project. I learned how to implement a SQL database for a real world application. 
+The sample database we used in the 64B class wasn't the most exciting one, so to see one get created and 
+populated was a joy. A lot was learnedfrom using GitHub for version control. There were many new concepts 
+that, again, got to see real world application, and a team project is a great place to have it happen. 
+GUI programming was a strange concept at the begining of the quarter, but taking part in a project that
+involved a GUI helped me expand my skillsets beyond that of a backend programmer. 
+
+Jasper:
