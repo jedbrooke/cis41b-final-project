@@ -1,5 +1,5 @@
 # Python Image Fetcher and Reviewer (PIFAR)
-this is our repository for our python final project
+This is our repository for our python final project
 we are going to get an A
 
 # Background
@@ -17,6 +17,18 @@ The main window also allows the user to review images by tag by clicking on `Rev
 After other categories have been downloaded and reviewed, the images can be sent to the 'remote' server for training. There are options there to send the image urls over for the server to download the full sized versions of the images. The remote server can be reset to clear all the tables. There are options to check if the database has enough data to start training and to start training. If allowable, the remote server can be shut down if there are no other users connected. The remote server can be started by runnning `server.py`.
 
 The local database can be reset by deleting the db file.
+
+# Files
+There are three important files in the project.
+
+`client.py` launches the GUI and is the main entry point for the application.
+`data.py` handles the database and downloading of images to the database.
+`server.py` launches an instance of the remote server that the client can connect to for the hypothetical training.
+
+`images.db` gets created when no such database exists. It stores the local thumbnail versions of the images and the metadata associated with each image.
+`serverimages.db` gets created on the 'server' and stores the full size image files.
+
+Miscellaneous test files were written to test the main files.
 
 # Slides
 The slides are available at https://docs.google.com/presentation/d/1VjEZNSGiX5WQ7owbERmVV7ALdXEMj2wZPv9BFNmggck/edit?usp=sharing
