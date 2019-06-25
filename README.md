@@ -25,7 +25,7 @@ There are three important files in the project.
 
 `data.py` handles the database and downloading of images to the database.
 
-`server.py` launches an instance of the remote server that the client can connect to for the hypothetical training. To enable the client to connect to the server, launch this file first, then launch the client.
+`server.py` launches an instance of the remote server that the client can connect to for the hypothetical training. To enable the client to connect to the server, launch an instance of the server first, then launch the client.
 
 
 `images.db` gets created when no such database exists. It stores the local thumbnail versions of the images and the metadata associated with each image.
