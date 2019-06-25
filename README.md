@@ -36,3 +36,6 @@ Miscellaneous test files were written to test the main files.
 
 # Slides
 The slides are available at https://docs.google.com/presentation/d/1VjEZNSGiX5WQ7owbERmVV7ALdXEMj2wZPv9BFNmggck/edit?usp=sharing
+
+# Github
+The github for this project is available at https://github.com/jedbrooke/cis41b-final-project/
